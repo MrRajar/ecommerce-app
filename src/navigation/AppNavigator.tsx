@@ -29,6 +29,7 @@ export type RootStackParamList = {
   PlaceOrder: { product?: any };
   Shipping: { product?: any };
   Successfully: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

@@ -27,7 +27,7 @@ const CartHeader: React.FC<{
 export default CartHeader;
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10 },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 20 },
   icon: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, textAlign: "center", fontSize: 16, fontWeight: "700", color: TEXT },
 });

@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -29,48 +28,55 @@ type Filters = {
 
 const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
   const { filter } = route.params || {};
-  
-  const [productList, setProductList] = useState(() => {
-    // Initialize with filtered products based on route params
+
+  const getBaseProducts = () => {
     switch (filter) {
       case 'deals':
-        return Products.filter(p => p.isDeal);
+        return Products.filter(p => p.isDeal || p.tags?.includes('deal') || p.tags?.includes('deals'));
       case 'trending':
-        return Products.filter(p => p.isTrending);
+        return Products.filter(p => p.isTrending || p.tags?.includes('trending'));
       default:
         return Products;
     }
-  });
+  };
+
+  const [baseProductList, setBaseProductList] = useState(getBaseProducts);
   const [searchText, setSearchText] = useState('');
   const [sortVisible, setSortVisible] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
 
-  const wishlistProducts = Products.filter(p => p.isWishlist);
-
-  const filteredProducts = productList.filter(p =>
-    p.title.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    return baseProductList.filter(p =>
+      p.title.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [baseProductList, searchText]);
 
   const sortLowToHigh = () => {
-    const sorted = [...filteredProducts].sort((a, b) => Number(a.price) - Number(b.price));
-    setProductList(sorted);
+    const sorted = [...baseProductList].sort(
+      (a, b) => Number(a.price) - Number(b.price)
+    );
+    setBaseProductList(sorted);
     setSortVisible(false);
   };
 
   const sortHighToLow = () => {
-    const sorted = [...filteredProducts].sort((a, b) => Number(b.price) - Number(a.price));
-    setProductList(sorted);
+    const sorted = [...baseProductList].sort(
+      (a, b) => Number(b.price) - Number(a.price)
+    );
+    setBaseProductList(sorted);
     setSortVisible(false);
   };
 
   const sortByRating = () => {
-    const sorted = [...filteredProducts].sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
-    setProductList(sorted);
+    const sorted = [...baseProductList].sort(
+      (a, b) => Number(b.rating || 0) - Number(a.rating || 0)
+    );
+    setBaseProductList(sorted);
     setSortVisible(false);
   };
 
   const handleFilterApply = (filters: Filters) => {
-    let filtered = [...Products]; // always start from full list
+    let filtered = getBaseProducts();
 
     if (filters.category) {
       filtered = filtered.filter(p => p.category === filters.category);
@@ -85,104 +91,86 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
     }
 
     if (filters.minRating !== undefined) {
-      filtered = filtered.filter(p => Number(p.rating || 0) >= filters.minRating!);
+      filtered = filtered.filter(
+        p => Number(p.rating || 0) >= filters.minRating!
+      );
     }
 
-    setProductList(filtered);
+    setBaseProductList(filtered);
     setFilterVisible(false);
   };
 
   const handleFilterReset = () => {
-    // Reset to the original filtered list based on route params
-    switch (filter) {
-      case 'deals':
-        setProductList(Products.filter(p => p.isDeal));
-        break;
-      case 'trending':
-        setProductList(Products.filter(p => p.isTrending));
-        break;
-      default:
-        setProductList(Products);
-        break;
-    }
+    setBaseProductList(getBaseProducts());
     setSearchText('');
     setFilterVisible(false);
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffff' }}>
-      <View style={{ marginTop: '7%' }}>
-        <Header />
+    <View style={styles.screen}>
+      <View style={styles.headerWrap}>
+        <Header onAvatarPress={() => navigation.navigate('Settings')} />
       </View>
 
-        <SearchBar
-          value={searchText}
-          onChangeText={setSearchText}
-          placeholder="Search any product..."
-        />
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.itemCount}>{filteredProducts.length}+ Items</Text>
+      <SearchBar
+        value={searchText}
+        onChangeText={setSearchText}
+        placeholder="Search any product..."
+      />
 
-          <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>
-            {filter === 'deals' ? 'Deal Products' : 'Trending Products'}
-          </Text>
-            <View style={styles.row}>
-              <TouchableOpacity style={styles.actionRow} onPress={() => setSortVisible(true)}>
-                <Text style={styles.actionText}>Sort</Text>
-                <Ionicons name="swap-vertical" size={14} color="#000" />
-              </TouchableOpacity>
+      <FlatList
+        data={filteredProducts}
+        numColumns={2}
+        keyExtractor={item => String(item.id)}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        columnWrapperStyle={styles.columnWrapper}
+        renderItem={({ item }) => <ProductCard product={item} />}
+        ListHeaderComponent={
+          <View style={styles.topSection}>
+            <View style={styles.topRow}>
+              <Text style={styles.itemCount}>
+                {filteredProducts.length.toLocaleString()}+ Items
+              </Text>
 
-              <TouchableOpacity style={styles.actionRow} onPress={() => setFilterVisible(true)}>
-                <Text style={styles.actionText}>Filter</Text>
-                <Ionicons name="options-outline" size={14} color="#000" />
-              </TouchableOpacity>
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setSortVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.actionText}>Sort</Text>
+                  <Ionicons name="swap-vertical" size={14} color="#000" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setFilterVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.actionText}>Filter</Text>
+                  <Ionicons name="options-outline" size={16} color="#000" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        }
+      />
 
-        <FlatList
-          data={filteredProducts}
-          numColumns={2}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
-          columnWrapperStyle={{ justifyContent: 'space-between', paddingBottom: 16, paddingTop: 10 }}
-          renderItem={({ item }) => <ProductCard product={item} />}
-          scrollEnabled={false} // Disable FlatList scrolling since parent ScrollView handles it
-        />
+      <SortModal
+        visible={sortVisible}
+        onClose={() => setSortVisible(false)}
+        onSortLowToHigh={sortLowToHigh}
+        onSortHighToLow={sortHighToLow}
+        onSortByRating={sortByRating}
+      />
 
-        {wishlistProducts.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Wishlist</Text>
-            <FlatList
-              data={wishlistProducts}
-              horizontal
-              keyExtractor={item => item.id}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10 }}
-              renderItem={({ item }) => <ProductCard product={item} />}
-              scrollEnabled={false} // Disable FlatList scrolling since parent ScrollView handles it
-            />
-          </View>
-        )}
-
-        <SortModal
-          visible={sortVisible}
-          onClose={() => setSortVisible(false)}
-          onSortLowToHigh={sortLowToHigh}
-          onSortHighToLow={sortHighToLow}
-          onSortByRating={sortByRating}
-        />
-
-        <FilterModal
-          visible={filterVisible}
-          onClose={() => setFilterVisible(false)}
-          onReset={handleFilterReset}
-          onApply={handleFilterApply}
-        />
-      </ScrollView>
+      <FilterModal
+        visible={filterVisible}
+        onClose={() => setFilterVisible(false)}
+        onReset={handleFilterReset}
+        onApply={handleFilterApply}
+      />
     </View>
   );
 };
@@ -190,21 +178,65 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
 export default TrendingProduct;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  section: { paddingHorizontal: 16, marginTop: 10 },
-  itemCount: { fontSize: 12, color: '#666', marginBottom: 6 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#000' },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  row: { flexDirection: 'row', gap: 10 },
-  actionRow: {
+  screen: {
+    flex: 1,
+    backgroundColor: '#FDFDFD',
+    paddingBottom:45,
+  },
+
+  headerWrap: {
+    marginTop: '7%',
+  },
+
+  topSection: {
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 6,
+  },
+
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  itemCount: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily:"Montserrat-SemiBold"
+  },
+
+  actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    height: 28,
-    backgroundColor: '#FDFDFD',
-    justifyContent: 'center',
+    gap: 8,
   },
-  actionText: { fontSize: 13, color: '#000' },
+
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#F6F6F6',
+  },
+
+  actionText: {
+    fontSize: 13,
+    color: '#111',
+    fontWeight: '500',
+  },
+
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 18,
+  },
+
+  columnWrapper: {
+    justifyContent: 'space-between',
+    
+  },
 });

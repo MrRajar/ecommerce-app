@@ -8,10 +8,13 @@ import { AppImages } from '../shared/utlis/AppImages';
 
 const PROFILE_IMAGE_KEY = '@profile_image_uri';
 
-const Header = () => {
-  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
+interface HeaderProps {
+  onAvatarPress?: () => void;
+  onMenuPress?: () => void;
+}
 
-  // ✅ navigation hook add kiya
+const Header: React.FC<HeaderProps> = ({ onAvatarPress, onMenuPress }) => {
+  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const navigation = useNavigation<any>();
 
   useFocusEffect(
@@ -21,11 +24,12 @@ const Header = () => {
       const loadProfileImage = async () => {
         try {
           const savedUri = await AsyncStorage.getItem(PROFILE_IMAGE_KEY);
+
           if (isActive) {
             setProfileImageUri(savedUri || null);
           }
-        } catch (e) {
-          console.log('Failed to load profile image in header', e);
+        } catch (error) {
+          console.log('Failed to load profile image in header', error);
         }
       };
 
@@ -37,23 +41,28 @@ const Header = () => {
     }, [])
   );
 
+  const handleAvatarPress = () => {
+    if (onAvatarPress) {
+      onAvatarPress();
+      return;
+    }
+
+    navigation.navigate('Settings');
+  };
+
   return (
     <View style={styles.container}>
-      {/* Left */}
-      <TouchableOpacity>
+      <TouchableOpacity onPress={onMenuPress} activeOpacity={0.8}>
         <AppIcon name="menu" type="material" size={26} />
       </TouchableOpacity>
 
-      {/* Center Logo + Text */}
       <View style={styles.center}>
         <Image source={AppImages.appLogo} style={styles.logo} />
         <Text style={styles.title}>Stylish</Text>
       </View>
 
-      {/* Right */}
       <View style={styles.right}>
-        {/* ✅ avatar press par Settings screen open */}
-        <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.8}>
           <Image
             source={profileImageUri ? { uri: profileImageUri } : AppImages.avatar}
             style={styles.avatar}

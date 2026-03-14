@@ -40,7 +40,7 @@ const DealOfDayCard: React.FC<DealOfDayCardProps> = ({
 
       {/* Header */}
       <View style={styles.headerRow}>
-        <View style={{marginLeft:"5%"}}>
+        <View style={{paddingHorizontal:15}}>
           <Text style={styles.title}>Deal of the Day</Text>
           <View style={styles.timerRow}>
             <Ionicons name="alarm-outline" size={16} color="#fff" />
@@ -64,7 +64,7 @@ const DealOfDayCard: React.FC<DealOfDayCardProps> = ({
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingTop: 1 }}
+          contentContainerStyle={{ paddingTop: 10 }}
           renderItem={({ item }) => (
             <View style={styles.cardWrapper}>
               <ProductCard product={item} />
@@ -88,7 +88,7 @@ export default DealOfDayCard;
 const styles = StyleSheet.create({
 
   container: {
-    padding: 16,
+    padding: 19,
   },
 
   headerRow: {
@@ -102,14 +102,16 @@ const styles = StyleSheet.create({
 
   title: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
+      fontFamily:"Montserrat-Medium",
   },
 
   timerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
+    fontFamily:"Montserrat-Regular"
   },
 
   timer: {

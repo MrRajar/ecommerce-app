@@ -33,7 +33,7 @@ export default OfferCard;
 
 const styles = StyleSheet.create({
   container: {
-    width: '88%',
+    width: '93%',
     alignSelf: 'center',
     backgroundColor: '#fff',
     borderRadius: 14,

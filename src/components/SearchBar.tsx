@@ -34,14 +34,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, placeholder,
 export default SearchBar;
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, marginBottom: 15 },
+  container: { paddingHorizontal: 15, marginBottom: 15, },
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    height: 45,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    height: 50,
   },
   input: {
     flex: 1,

@@ -7,7 +7,7 @@ import Home from '../features/home/Home/Home';
 import Wishlist from '../features/wishlist/Wishlist';
 import Search from '../features/search/Search';
 import Cart from '../features/cart/cart/Cart';
-import Settings from '../features/setting/Setting';
+import Settings from '../features/setting/Settings';
 import TrendingProduct from '../features/trendingproduct/trendingproduct/TrendingProduct'; // ✅ TEMP: placeholder for Wishlist
 const Tab = createBottomTabNavigator();
 
@@ -111,12 +111,11 @@ const TabNavigator: React.FC = () => {
       <Tab.Screen
         name="Settings"
         component={Settings}
-        options={{ tabBarLabel: 'Setting' }}
+        options={{ tabBarLabel: 'Settings' }}
       />
     </Tab.Navigator>
   );
 };
-
 export default TabNavigator;
 
 const styles = StyleSheet.create({

@@ -18,10 +18,10 @@ import auth from '@react-native-firebase/auth';
 
 import CheckoutHeader from '../../components/CheckoutHeader';
 import { styles } from './settings.styles';
-import ProfileAvatarSection from '../setting/Component/ProfileAvatarSection';
-import SettingsInputField from '../setting/Component/SettingsInputField';
-import AvatarOptionsSheet from '../setting/Component/AvatarOptionsSheet';
-import ProfileImagePreviewModal from '../setting/Component/ProfileImagePreviewModal';
+import ProfileAvatarSection from './Component/ProfileAvatarSection';
+import SettingsInputField from './Component/SettingsInputField';
+import AvatarOptionsSheet from './Component/AvatarOptionsSheet';
+import ProfileImagePreviewModal from './Component/ProfileImagePreviewModal';
 
 const PROFILE_IMAGE_KEY = '@profile_image_uri';
 

@@ -12,22 +12,19 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import type { Product } from '../types/Products';
-import { RootStackParamList } from '../navigation/AppNavigator'; 
+import { RootStackParamList } from '../navigation/AppNavigator';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_WIDTH = (SCREEN_WIDTH - 40) / 2;
+const CARD_WIDTH = (SCREEN_WIDTH - 56) / 2;
 
 interface ProductCardProps {
   product: Product;
-
   onPress?: () => void;
   layout?: 'vertical' | 'horizontal';
   showAddToCart?: boolean;
   showWishlist?: boolean;
-
   showRating?: boolean;
 }
-
 
 const normalizeImageSource = (img?: string | number | ImageSourcePropType) => {
   if (!img) return undefined;
@@ -38,7 +35,7 @@ const normalizeImageSource = (img?: string | number | ImageSourcePropType) => {
 const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onPress,
-  showRating = true, // 
+  showRating = true,
 }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -66,35 +63,39 @@ const ProductCard: React.FC<ProductCardProps> = ({
         resizeMode="cover"
       />
 
-      <Text numberOfLines={1} style={styles.name}>
-        {product.title}
-      </Text>
-
-      {product.description ? (
-        <Text numberOfLines={1} style={styles.description}>
-          {product.description}
+      <View style={styles.content}>
+        <Text numberOfLines={1} style={styles.name}>
+          {product.title}
         </Text>
-      ) : null}
 
-      <Text style={styles.price}>${product.price}</Text>
+        {product.description ? (
+          <Text numberOfLines={2} style={styles.description}>
+            {product.description}
+          </Text>
+        ) : (
+          <View style={styles.descriptionSpacer} />
+        )}
 
-      {showRating && !!product.rating && (
-        <View
-          style={styles.ratingContainer}
-          accessible
-          accessibilityLabel={`${product.rating} out of 5 stars`}
-        >
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Ionicons
-              key={star}
-              name={star <= product.rating ? 'star' : 'star-outline'}
-              size={14}
-              color="#EDB310"
-              style={{ marginRight: 2 }}
-            />
-          ))}
-        </View>
-      )}
+        <Text style={styles.price}>${product.price}</Text>
+
+        {showRating && !!product.rating && (
+          <View
+            style={styles.ratingContainer}
+            accessible
+            accessibilityLabel={`${product.rating} out of 5 stars`}
+          >
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Ionicons
+                key={star}
+                name={star <= product.rating ? 'star' : 'star-outline'}
+                size={14}
+                color="#EDB310"
+                style={styles.starIcon}
+              />
+            ))}
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
@@ -106,37 +107,55 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     backgroundColor: '#fff',
     borderRadius: 14,
-    padding: 10,
     marginBottom: 16,
-    elevation: 3,
-    marginRight: 8,
+      elevation: 3,
+    overflow: 'hidden',
   },
+
   image: {
-    height: 190,
     width: '100%',
-    borderRadius: 12,
+    height: 120,
     backgroundColor: '#f3f3f3',
   },
+
+  content: {
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
+
   name: {
     fontSize: 13,
-    marginTop: 8,
     fontWeight: '600',
     color: '#111',
   },
+
   description: {
     fontSize: 12,
     color: '#666',
-    marginTop: 4,
+    marginTop: 2,
+    lineHeight: 13,
+    minHeight: 34,
   },
+
+  descriptionSpacer: {
+    height: 34,
+  },
+
   price: {
     fontSize: 14,
     fontWeight: '700',
-    marginTop: 6,
     color: '#000',
+    paddingBottom:6
   },
+
   ratingContainer: {
     flexDirection: 'row',
     marginTop: 6,
     alignItems: 'center',
+  },
+
+  starIcon: {
+    marginRight: 2,
   },
 });

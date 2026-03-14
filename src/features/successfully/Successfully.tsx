@@ -1,116 +1,140 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
 const Successfully: React.FC = () => {
-    const navigation = useNavigation<any>();
+  const navigation = useNavigation<any>();
 
-    const handleContinue = () => {
-        navigation.dispatch(
-            CommonActions.reset({
-                index: 0,
-                routes: [{ name: 'MainTabs' }],
-            })
-        );
-    };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'MainTabs',
+              state: {
+                routes: [{ name: 'Home' }],
+              },
+            },
+          ],
+        })
+      );
+    }, 2500);
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.dimmedBackground}>
-                <Text style={styles.bgTitle}>Checkout</Text>
-            </View>
+    return () => clearTimeout(timer);
+  }, [navigation]);
 
-            <View style={styles.popup}>
-                <View style={styles.iconCircle}>
-                    <Ionicons name="checkmark" size={40} color="#fff" />
-                </View>
-                <Text style={styles.successText}>Payment done successfully.</Text>
-            </View>
+  return (
+    <View style={styles.overlay}>
+      <View style={styles.popup}>
+        <View style={styles.iconWrapper}>
+          <View style={styles.dotSmallLeft} />
+          <View style={styles.dotSmallRight} />
+          <View style={styles.dotTinyLeft} />
+          <View style={styles.dotTinyRight} />
 
-            <View style={styles.bottomContainer}>
-                <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
-                    <Text style={styles.continueText}>Continue</Text>
-                </TouchableOpacity>
-            </View>
-
+          <View style={styles.iconCircle}>
+            <Ionicons name="checkmark" size={38} color="#fff" />
+          </View>
         </View>
-    );
+
+        <Text style={styles.successText}>Payment done successfully.</Text>
+      </View>
+    </View>
+  );
 };
 
 export default Successfully;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.6)', 
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    dimmedBackground: {
-        position: 'absolute',
-        top: 60,
-        width: '100%',
-        alignItems: 'center',
-        opacity: 0.3,
-    },
-    bgTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#fff'
-    },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
 
-    popup: {
-        backgroundColor: '#fff',
-        width: width * 0.8,
-        paddingVertical: 40,
-        paddingHorizontal: 20,
-        borderRadius: 20,
-        alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 10,
-        elevation: 10,
-    },
-    iconCircle: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#F83758', 
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-        shadowColor: "#F83758",
-        shadowOpacity: 0.4,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 5 }
-    },
-    successText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#000',
-        textAlign: 'center',
-    },
+  popup: {
+    width: width * 0.88,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 10,
+  },
 
-    bottomContainer: {
-        position: 'absolute',
-        bottom: 40,
-        width: '100%',
-        paddingHorizontal: 20,
-    },
-    continueBtn: {
-        backgroundColor: '#F83758',
-        paddingVertical: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        width: '100%',
-    },
-    continueText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '700',
-    },
+  iconWrapper: {
+    width: 110,
+    height: 90,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    position: 'relative',
+  },
+
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F83758',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dotSmallLeft: {
+    position: 'absolute',
+    left: 18,
+    top: 22,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F8A5B5',
+  },
+
+  dotSmallRight: {
+    position: 'absolute',
+    right: 18,
+    top: 18,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F8A5B5',
+  },
+
+  dotTinyLeft: {
+    position: 'absolute',
+    left: 28,
+    top: 44,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#F8A5B5',
+  },
+
+  dotTinyRight: {
+    position: 'absolute',
+    right: 28,
+    top: 42,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#F8A5B5',
+  },
+
+  successText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#000',
+    textAlign: 'center',
+  },
 });

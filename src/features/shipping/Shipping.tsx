@@ -79,7 +79,7 @@ const Shipping: React.FC = () => {
             <View style={styles.footer}>
                 <TouchableOpacity
                     style={styles.continueBtn}
-                    onPress={() => navigation.replace('Successfully')}
+                    onPress={() => navigation.navigate('Successfully')}
                 >
                     <Text style={styles.continueText}>Continue</Text>
                 </TouchableOpacity>

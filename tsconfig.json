@@ -2,7 +2,15 @@
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
     "types": ["jest"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["**/*.ts", "**/*.tsx", ".bundle/App.tsx", "App.js", "src/features/productdetail"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".bundle/App.tsx",
+    "App.js",
+    "src/features/productdetail"
+, "src/components/TrendingHeader.tsx"  ],
   "exclude": ["**/node_modules", "**/Pods"]
 }

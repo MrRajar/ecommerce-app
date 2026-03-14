@@ -20,7 +20,7 @@ import ProductCard from '../../../components/ProductCard';
 import DealOfDayCard from '../../../components/DealofdayCard';
 import SpecialOfferCard from '../../../components/SpecialOfferCard';
 import FlatHeelCard from '../../../components/FlatHeelCard';
-import TrendingHeader from '../../../components/TrendingHeader';
+import TrendingHeader from '../../../components/TrendingHeader.tsx';
 import BannerCard from '../../../components/BannerCard';
 import SponsoredCard from '../../../components/SponsoredCard';
 import OfferCard from '../../../components/OfferCard';
@@ -210,7 +210,7 @@ const Home = ({ navigation }: any) => {
   return (
     <View style={styles.container}>
       <View style={{ marginTop: '7%' }}>
-        <Header />
+      <Header onAvatarPress={() => navigation.navigate('Settings')} />
       </View>
 
       <SearchBar
@@ -242,7 +242,7 @@ const Home = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         </View>
-
+        <View style={{backgroundColor:"#ffff",paddingVertical:15,paddingHorizontal:10,borderRadius:10}}>
         <FlatList
           data={Categories}
           horizontal
@@ -252,6 +252,7 @@ const Home = ({ navigation }: any) => {
             <CategoryCard title={item.title} image={item.image} />
           )}
         />
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -281,15 +282,15 @@ const Home = ({ navigation }: any) => {
             ))}
           </View>
         </View>
-
+         <View>
         <DealOfDayCard
           products={dealProducts}
           timer={`${hours}:${minutes}:${seconds}`}
           onViewAll={() =>
-            navigation.replace('TrendingProduct', { filter: 'deals' })
+            navigation.navigate('TrendingProduct', { filter: 'deals' })
           }
         />
-
+</View>
         <SpecialOfferCard
           image={AppImages.specialoffer}
           title="Special Offers"
@@ -309,7 +310,7 @@ const Home = ({ navigation }: any) => {
             title="Trending Products"
             subtitle="Last Date 29/02/22"
             onPressViewAll={() =>
-              navigation.replace('TrendingProduct', { filter: 'trending' })
+              navigation.navigate('TrendingProduct', { filter: 'trending' })
             }
           />
         </View>
@@ -322,7 +323,7 @@ const Home = ({ navigation }: any) => {
           renderItem={({ item }) => (
             <ProductCard product={item} showRating={false} />
           )}
-          contentContainerStyle={{ paddingHorizontal: 15 }}
+          contentContainerStyle={{ paddingHorizontal: 15, gap: 13,top:5 }}
         />
 
         <View style={{ marginTop: '5%' }}>
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: '#FFFF',
     paddingHorizontal: 8,
     height: 26,
     borderRadius: 8,
