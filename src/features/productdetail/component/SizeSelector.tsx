@@ -1,5 +1,3 @@
-// src/components/SizeSelector.tsx
-
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
@@ -16,7 +14,7 @@ const SizeSelector: React.FC<Props> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Size : {selectedSize}</Text>
+      <Text style={styles.label}>Size: {selectedSize}</Text>
       <View style={styles.row}>
         {(sizes || []).map(size => (
           <TouchableOpacity
@@ -26,6 +24,7 @@ const SizeSelector: React.FC<Props> = ({
               selectedSize === size && styles.active,
             ]}
             onPress={() => onSelect(size)}
+            activeOpacity={0.8}
           >
             <Text
               style={[
@@ -46,11 +45,12 @@ export default SizeSelector;
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
+    marginTop: 12,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: '#000',
     marginBottom: 8,
   },
   row: {
@@ -59,19 +59,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sizeBox: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#fa6682',
+    backgroundColor: '#fff',
+    minWidth: 48,
+    alignItems: 'center',
   },
   active: {
-    backgroundColor: '#ff3b5c',
-    borderColor: '#ff3b5c',
+    backgroundColor: '#fa6682',
+    borderColor: '#fa6682',
   },
   sizeText: {
     fontSize: 13,
-    color: '#000',
+    fontWeight: '600',
+    color: '#fa6682',
   },
   activeText: {
     color: '#fff',

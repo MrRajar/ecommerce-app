@@ -221,13 +221,33 @@ Made famous in 1985, the shoe has stood the test of time, becoming one of the mo
         </View>
 
         <View style={styles.content}>
-          <SizeSelector
-            sizes={
-              product?.sizes || ['6 UK', '7 UK', '8 UK', '9 UK', '10 UK']
+          {(() => {
+            const hasSizes = product?.sizes && product.sizes.length > 0;
+            // Only use specific shoe/fashion categories, not generic like 'women' which could be bags
+            const isShoeCategory = ['fashion', 'shoes', 'footwear'].includes(
+              product?.category?.toLowerCase() || ''
+            );
+            // Catch all shoes by title keywords
+            const isShoeTitle = /shoe|sneaker|boot|heel|sandal|runner|retro|jordan/i.test(
+              product?.title || product?.name || ''
+            );
+
+            // Show sizes if it has explicit sizes, OR if we can infer it's a shoe
+            if (hasSizes || isShoeCategory || isShoeTitle) {
+              return (
+                <SizeSelector
+                  sizes={
+                    hasSizes && product.sizes
+                      ? product.sizes
+                      : ['6 UK', '7 UK', '8 UK', '9 UK', '10 UK']
+                  }
+                  selectedSize={selectedSize}
+                  onSelect={setSelectedSize}
+                />
+              );
             }
-            selectedSize={selectedSize}
-            onSelect={setSelectedSize}
-          />
+            return null;
+          })()}
 
           <Text style={styles.title}>
             {product?.title || product?.name}
