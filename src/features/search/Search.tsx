@@ -8,12 +8,13 @@ import {
   TouchableOpacity,
   FlatList,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import ProductCard from '../../components/ProductCard'; // ✅ path check
-import { Products } from '../../data/Products'; // ✅ path check
+import ProductCard from '../../components/ProductCard';
+import { getAllProducts, AppProduct } from '../../services/Firestore';
 
 const SEARCH_HISTORY_KEY = '@search_history_v1';
 const MAX_HISTORY_ITEMS = 10;
@@ -39,11 +40,34 @@ const Search: React.FC = () => {
     loadHistory();
   }, []);
 
+  const [products, setProducts] = useState<AppProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [productLoadError, setProductLoadError] = useState(false);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setIsLoadingProducts(true);
+        const remoteProducts = await getAllProducts();
+        setProducts(remoteProducts);
+        setProductLoadError(false);
+      } catch (error) {
+        console.log('SEARCH LOAD ERROR =>', error);
+        setProducts([]);
+        setProductLoadError(true);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   const filteredProducts = useMemo(() => {
     const q = searchText.trim().toLowerCase();
     if (!q) return [];
 
-    return Products.filter((p: any) => {
+    return products.filter((p: any) => {
       const title = String(p?.title ?? '').toLowerCase();
       const desc = String(p?.description ?? '').toLowerCase();
       const category = String(p?.category ?? '').toLowerCase();
@@ -54,7 +78,7 @@ const Search: React.FC = () => {
         category.includes(q)
       );
     });
-  }, [searchText]);
+  }, [searchText, products]);
 
   const persistHistory = async (items: string[]) => {
     try {
@@ -202,7 +226,20 @@ const Search: React.FC = () => {
             <Text style={styles.resultsCount}>{filteredProducts.length} items</Text>
           </View>
 
-          {filteredProducts.length === 0 ? (
+          {isLoadingProducts ? (
+            <View style={styles.emptyWrap}>
+              <ActivityIndicator size="large" color="#111" style={{ marginBottom: 16 }} />
+              <Text style={styles.emptyText}>Loading products...</Text>
+            </View>
+          ) : productLoadError ? (
+            <View style={styles.emptyWrap}>
+              <Ionicons name="alert-circle-outline" size={22} color="#B0B0B0" />
+              <Text style={styles.emptyText}>Unable to load products</Text>
+              <Text style={styles.emptySubText}>
+                Please check your network connection and try again.
+              </Text>
+            </View>
+          ) : filteredProducts.length === 0 ? (
             <View style={styles.emptyWrap}>
               <Ionicons name="search-outline" size={22} color="#B0B0B0" />
               <Text style={styles.emptyText}>No products found</Text>

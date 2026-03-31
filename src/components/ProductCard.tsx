@@ -6,31 +6,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  ImageSourcePropType,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import type { Product } from '../types/Products';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { normalizeImageSource } from '../shared/utlis/normalizeImageSource';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = (SCREEN_WIDTH - 56) / 2;
 
 interface ProductCardProps {
-  product: Product;
+  product: Product & {
+    imageUrl?: string;
+  };
   onPress?: () => void;
-  layout?: 'vertical' | 'horizontal';
-  showAddToCart?: boolean;
-  showWishlist?: boolean;
   showRating?: boolean;
 }
-
-const normalizeImageSource = (img?: string | number | ImageSourcePropType) => {
-  if (!img) return undefined;
-  if (typeof img === 'string') return { uri: img } as ImageSourcePropType;
-  return img as ImageSourcePropType;
-};
 
 const ProductCard: React.FC<ProductCardProps> = ({
   product,
@@ -49,16 +43,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
     navigation.navigate('ProductDetail', { product } as any);
   };
 
+  const productImage =
+    typeof product.image === 'string'
+      ? product.image
+      : typeof product.imageUrl === 'string'
+      ? product.imageUrl
+      : '';
+
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={handlePress}
       activeOpacity={0.85}
-      accessibilityRole="button"
-      accessibilityLabel={`Open details for ${product.title}`}
     >
       <Image
-        source={normalizeImageSource(product.image)}
+        source={normalizeImageSource(productImage)}
         style={styles.image}
         resizeMode="cover"
       />
@@ -76,23 +75,27 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <View style={styles.descriptionSpacer} />
         )}
 
-        <Text style={styles.price}>${product.price}</Text>
+        <Text style={styles.price}>₨{product.price}</Text>
+
+        {!!product.oldprice && (
+          <Text style={styles.oldPrice}>₨{product.oldprice}</Text>
+        )}
 
         {showRating && !!product.rating && (
-          <View
-            style={styles.ratingContainer}
-            accessible
-            accessibilityLabel={`${product.rating} out of 5 stars`}
-          >
+          <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
               <Ionicons
                 key={star}
-                name={star <= product.rating ? 'star' : 'star-outline'}
+                name={star <= Number(product.rating) ? 'star' : 'star-outline'}
                 size={14}
                 color="#EDB310"
                 style={styles.starIcon}
               />
             ))}
+
+            {!!product.ratingcount && (
+              <Text style={styles.ratingCount}>{product.ratingcount}</Text>
+            )}
           </View>
         )}
       </View>
@@ -108,7 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     marginBottom: 16,
-      elevation: 3,
+    elevation: 3,
     overflow: 'hidden',
   },
 
@@ -146,16 +149,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#000',
-    paddingBottom:6
+    paddingTop: 4,
+  },
+
+  oldPrice: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'line-through',
+    marginTop: 2,
   },
 
   ratingContainer: {
     flexDirection: 'row',
     marginTop: 6,
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
 
   starIcon: {
     marginRight: 2,
+  },
+
+  ratingCount: {
+    marginLeft: 6,
+    fontSize: 11,
+    color: '#999',
   },
 });

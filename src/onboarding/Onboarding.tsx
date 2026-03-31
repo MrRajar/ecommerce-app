@@ -15,16 +15,15 @@ import { onboardingdata } from './onboardingdata';
 
 const { width } = Dimensions.get('window');
 
-const ONBOARDING_SEEN_KEY = '@ecommerce/onboarding_seen_v1';
+const ONBOARDING_DONE_KEY = 'onboarding_done';
 
 const Onboarding = ({ navigation }: any) => {
   const ref = useRef<FlatList>(null);
   const [index, setIndex] = useState(0);
 
-  // ✅ onboarding complete/save + move to Login
   const completeOnboarding = async () => {
     try {
-      await AsyncStorage.setItem(ONBOARDING_SEEN_KEY, 'true');
+      await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
 
       // replace use kiya taake onboarding stack me na rahe
       navigation.replace('Login');

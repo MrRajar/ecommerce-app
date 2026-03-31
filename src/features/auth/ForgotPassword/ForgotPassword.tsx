@@ -44,7 +44,15 @@ const ForgotPassword = ({ navigation }: any) => {
       setIsSubmitLoading(true);
       setFormMsg("");
 
-      // ✅ Registered email par reset mail send hogi
+      // ✅ Check if email is registered
+      const methods = await auth().fetchSignInMethodsForEmail(cleanEmail);
+      if (methods.length === 0) {
+        setEmailError("This email is not registered.");
+        setIsSubmitLoading(false);
+        return;
+      }
+
+      // ✅ Send reset link if email exists
       await auth().sendPasswordResetEmail(cleanEmail);
 
       setFormMsg("Password reset link sent to your email.");
@@ -53,7 +61,7 @@ const ForgotPassword = ({ navigation }: any) => {
     } catch (e: any) {
       // Simple + clear messages
       if (e?.code === "auth/user-not-found") {
-        setFormMsg("This email is not registered.");
+        setEmailError("This email is not registered.");
       } else if (e?.code === "auth/invalid-email") {
         setEmailError("Invalid email");
       } else if (e?.code === "auth/too-many-requests") {

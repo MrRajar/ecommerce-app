@@ -73,6 +73,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
       animationType="slide"
       visible={visible}
       onRequestClose={onClose}
+      presentationStyle="overFullScreen"
+      statusBarTranslucent={true}
     >
       <Pressable style={styles.overlay} onPress={onClose} />
 

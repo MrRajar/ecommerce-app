@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -14,10 +15,8 @@ import SearchBar from '../../../components/SearchBar';
 import ProductCard from '../../../components/ProductCard';
 import SortModal from '../../../components/SortModal';
 import FilterModal from '../../../components/FilterModal';
-import { Products } from '../../../data/Products';
 import { RootStackParamList } from '../../../navigation/AppNavigator';
-
-type Props = NativeStackScreenProps<RootStackParamList, 'TrendingProduct'>;
+import { getAllProducts } from '../../../services/Firestore';
 
 type Filters = {
   category?: string;
@@ -26,34 +25,96 @@ type Filters = {
   minRating?: number;
 };
 
+type Props = NativeStackScreenProps<RootStackParamList, 'TrendingProduct'>;
+
 const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
-  const { filter } = route.params || {};
+  const filter = route.params?.filter ?? 'all';
+  const paramProducts = route.params?.products ?? [];
+  const categoryId = (route.params as any)?.categoryId;
+  const categoryTitle = (route.params as any)?.categoryTitle;
 
-  const getBaseProducts = () => {
-    switch (filter) {
-      case 'deals':
-        return Products.filter(p => p.isDeal || p.tags?.includes('deal') || p.tags?.includes('deals'));
-      case 'trending':
-        return Products.filter(p => p.isTrending || p.tags?.includes('trending'));
-      default:
-        return Products;
-    }
-  };
-
-  const [baseProductList, setBaseProductList] = useState(getBaseProducts);
+  const [allProducts, setAllProducts] = useState<any[]>(paramProducts);
+  const [loading, setLoading] = useState(paramProducts.length === 0);
+  const [baseProductList, setBaseProductList] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
   const [sortVisible, setSortVisible] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
 
+  useEffect(() => {
+    if (paramProducts.length > 0 && filter !== 'category') {
+      setAllProducts(paramProducts);
+      setLoading(false);
+      return;
+    }
+    let isMounted = true;
+    getAllProducts().then(data => {
+      if (!isMounted) return;
+      setAllProducts(data);
+      setLoading(false);
+    }).catch(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, []);
+
+  const getBaseProducts = (source: any[]) => {
+    const normalizedProducts = source.map((p: any) => ({
+      ...p,
+      id: String(p.id ?? ''),
+      title: String(p.title ?? ''),
+      price: Number(p.price ?? 0),
+      rating: p.rating !== undefined ? Number(p.rating) : 0,
+    }));
+
+    switch (filter) {
+      case 'deal':
+      case 'deals':
+        return normalizedProducts.filter((p: any) => p.isDeal === true);
+      case 'trending':
+        return normalizedProducts.filter((p: any) => p.isTrending === true);
+      case 'category':
+        return normalizedProducts.filter((p: any) => 
+          p.categoryId === categoryId ||
+          p.category === categoryTitle || 
+          p.category?.toLowerCase() === categoryTitle?.toLowerCase()
+        );
+      case 'all':
+      default:
+        return normalizedProducts;
+    }
+  };
+
+  useEffect(() => {
+    setBaseProductList(getBaseProducts(allProducts));
+  }, [allProducts, filter]);
+
+  // ✅ FIX: Search filters from baseProductList
   const filteredProducts = useMemo(() => {
-    return baseProductList.filter(p =>
-      p.title.toLowerCase().includes(searchText.toLowerCase())
+    if (!searchText.trim()) return baseProductList;
+    return baseProductList.filter((p: any) =>
+      p.title?.toLowerCase().includes(searchText.toLowerCase()),
     );
   }, [baseProductList, searchText]);
 
+  // ✅ Title based on filter
+  const headerTitle = useMemo(() => {
+    switch (filter) {
+      case 'deal':
+      case 'deals':
+        return 'Deal of the Day';
+      case 'trending':
+        return 'Trending Products';
+      case 'category':
+        return categoryTitle || 'Category';
+      case 'all':
+      default:
+        return `${filteredProducts.length}+ Items`;
+    }
+  }, [filter, categoryTitle, filteredProducts.length]);
+
   const sortLowToHigh = () => {
     const sorted = [...baseProductList].sort(
-      (a, b) => Number(a.price) - Number(b.price)
+      (a, b) => Number(a.price) - Number(b.price),
     );
     setBaseProductList(sorted);
     setSortVisible(false);
@@ -61,7 +122,7 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
 
   const sortHighToLow = () => {
     const sorted = [...baseProductList].sort(
-      (a, b) => Number(b.price) - Number(a.price)
+      (a, b) => Number(b.price) - Number(a.price),
     );
     setBaseProductList(sorted);
     setSortVisible(false);
@@ -69,30 +130,30 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
 
   const sortByRating = () => {
     const sorted = [...baseProductList].sort(
-      (a, b) => Number(b.rating || 0) - Number(a.rating || 0)
+      (a, b) => Number(b.rating || 0) - Number(a.rating || 0),
     );
     setBaseProductList(sorted);
     setSortVisible(false);
   };
 
   const handleFilterApply = (filters: Filters) => {
-    let filtered = getBaseProducts();
+    let filtered = getBaseProducts(allProducts);
 
     if (filters.category) {
-      filtered = filtered.filter(p => p.category === filters.category);
+      filtered = filtered.filter((p: any) => p.category === filters.category);
     }
 
     if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
       filtered = filtered.filter(
-        p =>
+        (p: any) =>
           Number(p.price) >= (filters.minPrice ?? 0) &&
-          Number(p.price) <= (filters.maxPrice ?? Infinity)
+          Number(p.price) <= (filters.maxPrice ?? Infinity),
       );
     }
 
     if (filters.minRating !== undefined) {
       filtered = filtered.filter(
-        p => Number(p.rating || 0) >= filters.minRating!
+        (p: any) => Number(p.rating || 0) >= filters.minRating!,
       );
     }
 
@@ -101,7 +162,7 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const handleFilterReset = () => {
-    setBaseProductList(getBaseProducts());
+    setBaseProductList(getBaseProducts(allProducts));
     setSearchText('');
     setFilterVisible(false);
   };
@@ -109,7 +170,7 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
   return (
     <View style={styles.screen}>
       <View style={styles.headerWrap}>
-        <Header onAvatarPress={() => navigation.navigate('Settings')} />
+        <Header onAvatarPress={() => navigation.navigate('SettingsScreen' as any)} />
       </View>
 
       <SearchBar
@@ -121,24 +182,36 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
       <FlatList
         data={filteredProducts}
         numColumns={2}
-        keyExtractor={item => String(item.id)}
+        keyExtractor={(item: any) => String(item.id)}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.columnWrapper}
-        renderItem={({ item }) => <ProductCard product={item} />}
+        renderItem={({ item }) => (
+          <ProductCard
+            product={item as any}
+            onPress={() =>
+              navigation.navigate('ProductDetail', {
+                product: item as any,
+                allProducts: allProducts,
+              })
+            }
+          />
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyText}>No products found</Text>
+          </View>
+        }
         ListHeaderComponent={
           <View style={styles.topSection}>
             <View style={styles.topRow}>
-              <Text style={styles.itemCount}>
-                {filteredProducts.length.toLocaleString()}+ Items
-              </Text>
+              <Text style={styles.itemCount}>{headerTitle}</Text>
 
               <View style={styles.actionsRow}>
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => setSortVisible(true)}
-                  activeOpacity={0.8}
-                >
+                  activeOpacity={0.8}>
                   <Text style={styles.actionText}>Sort</Text>
                   <Ionicons name="swap-vertical" size={14} color="#000" />
                 </TouchableOpacity>
@@ -146,8 +219,7 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => setFilterVisible(true)}
-                  activeOpacity={0.8}
-                >
+                  activeOpacity={0.8}>
                   <Text style={styles.actionText}>Filter</Text>
                   <Ionicons name="options-outline" size={16} color="#000" />
                 </TouchableOpacity>
@@ -181,7 +253,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#FDFDFD',
-    paddingBottom:45,
+    paddingBottom: 45,
   },
 
   headerWrap: {
@@ -204,7 +276,7 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '800',
     color: '#000000',
-    fontFamily:"Montserrat-SemiBold"
+    fontFamily: 'Montserrat-SemiBold',
   },
 
   actionsRow: {
@@ -237,6 +309,15 @@ const styles = StyleSheet.create({
 
   columnWrapper: {
     justifyContent: 'space-between',
-    
+  },
+
+  emptyWrap: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
 });

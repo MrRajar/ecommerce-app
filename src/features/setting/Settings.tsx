@@ -43,7 +43,7 @@ const SettingsScreen: React.FC = () => {
   const [isPickingImage, setIsPickingImage] = useState(false);
 
   const [email, setEmail] = useState('aashifa@gmail.com');
-  const [password, setPassword] = useState('************');
+  const [name, setName] = useState('sheikhatif');
 
   const [pincode, setPincode] = useState('450116');
   const [address, setAddress] = useState("216 St Paul's Rd,");
@@ -56,17 +56,50 @@ const SettingsScreen: React.FC = () => {
   const [ifscCode, setIfscCode] = useState('SBIN00428');
 
   useEffect(() => {
-    const loadSavedProfileImage = async () => {
+    const loadSavedProfileData = async () => {
       try {
         const savedUri = await AsyncStorage.getItem(PROFILE_IMAGE_KEY);
         setProfileImageUri(savedUri || null);
         setDraftProfileImageUri(undefined);
+
+        const currentUser = auth().currentUser;
+        if (currentUser && currentUser.email) {
+          setEmail(currentUser.email);
+        }
+
+        const savedName = await AsyncStorage.getItem('@profile_name');
+        if (savedName) setName(savedName);
+
+        const savedPincode = await AsyncStorage.getItem('@profile_pincode');
+        if (savedPincode) setPincode(savedPincode);
+
+        const savedAddress = await AsyncStorage.getItem('@profile_address');
+        if (savedAddress) setAddress(savedAddress);
+
+        const savedCity = await AsyncStorage.getItem('@profile_city');
+        if (savedCity) setCity(savedCity);
+
+        const savedState = await AsyncStorage.getItem('@profile_state');
+        if (savedState) setStateName(savedState);
+
+        const savedCountry = await AsyncStorage.getItem('@profile_country');
+        if (savedCountry) setCountry(savedCountry);
+
+        const savedBankAcc = await AsyncStorage.getItem('@profile_bank_acc');
+        if (savedBankAcc) setBankAccountNumber(savedBankAcc);
+
+        const savedBankName = await AsyncStorage.getItem('@profile_bank_name');
+        if (savedBankName) setAccountHolderName(savedBankName);
+
+        const savedBankIfsc = await AsyncStorage.getItem('@profile_bank_ifsc');
+        if (savedBankIfsc) setIfscCode(savedBankIfsc);
+
       } catch (e) {
-        console.log('Failed to load profile image', e);
+        console.log('Failed to load profile data', e);
       }
     };
 
-    loadSavedProfileImage();
+    loadSavedProfileData();
   }, []);
 
   const currentPreviewUri = useMemo(
@@ -108,6 +141,45 @@ const SettingsScreen: React.FC = () => {
       }
 
       Alert.alert('Error', 'Something went wrong while picking image');
+    } finally {
+      setIsPickingImage(false);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      setAvatarSheetVisible(false);
+
+      if (Platform.OS !== 'android') {
+        Alert.alert('Not supported', 'Camera capture is enabled on Android only.');
+        return;
+      }
+
+      setIsPickingImage(true);
+
+      const image = await ImageCropPicker.openCamera({
+        mediaType: 'photo',
+        cropping: true,
+        width: 600,
+        height: 600,
+        cropperCircleOverlay: true,
+        compressImageQuality: 0.85,
+        forceJpg: true,
+      });
+
+      const uri = image?.path;
+      if (uri) {
+        setDraftProfileImageUri(uri);
+      }
+    } catch (error: any) {
+      if (
+        error?.code === 'E_PICKER_CANCELLED' ||
+        String(error?.message || '').toLowerCase().includes('cancel')
+      ) {
+        return;
+      }
+
+      Alert.alert('Error', 'Something went wrong while capturing image');
     } finally {
       setIsPickingImage(false);
     }
@@ -157,6 +229,16 @@ const SettingsScreen: React.FC = () => {
     try {
       setIsSaving(true);
 
+      await AsyncStorage.setItem('@profile_name', name);
+      await AsyncStorage.setItem('@profile_pincode', pincode);
+      await AsyncStorage.setItem('@profile_address', address);
+      await AsyncStorage.setItem('@profile_city', city);
+      await AsyncStorage.setItem('@profile_state', stateName);
+      await AsyncStorage.setItem('@profile_country', country);
+      await AsyncStorage.setItem('@profile_bank_acc', bankAccountNumber);
+      await AsyncStorage.setItem('@profile_bank_name', accountHolderName);
+      await AsyncStorage.setItem('@profile_bank_ifsc', ifscCode);
+
       if (draftProfileImageUri !== undefined) {
         if (draftProfileImageUri) {
           await AsyncStorage.setItem(PROFILE_IMAGE_KEY, draftProfileImageUri);
@@ -168,6 +250,8 @@ const SettingsScreen: React.FC = () => {
 
         setDraftProfileImageUri(undefined);
       }
+
+      Alert.alert('Success', 'Profile details saved successfully!');
     } catch (e: any) {
       Alert.alert('Save failed', e?.message ?? 'Something went wrong while saving');
     } finally {
@@ -182,7 +266,7 @@ const SettingsScreen: React.FC = () => {
       setIsLogoutLoading(true);
 
       await auth().signOut();
-      await AsyncStorage.removeItem(PROFILE_IMAGE_KEY);
+      // User requested explicitly: pic should NOT be removed even after multiple login/logouts.
 
       navigation.reset({
         index: 0,
@@ -267,15 +351,17 @@ const SettingsScreen: React.FC = () => {
 
           <Text style={styles.sectionTitle}>Personal Details</Text>
 
+
+
+          <SettingsInputField
+            label="Name"
+            value={name}
+            onChangeText={setName}
+          />
           <SettingsInputField
             label="Email Address"
             value={email}
             editable={false}
-          />
-
-          <SettingsInputField
-            label="Password"
-            value=""
           />
 
           <View style={styles.changePasswordRow}>
@@ -400,9 +486,11 @@ const SettingsScreen: React.FC = () => {
 
       <AvatarOptionsSheet
         visible={avatarSheetVisible}
+        hasPicture={!!currentPreviewUri}
         onClose={() => setAvatarSheetVisible(false)}
         onView={handleViewProfilePicture}
         onChooseGallery={handlePickImage}
+        onTakePhoto={handleTakePhoto}
         onRemove={handleRemoveProfilePicture}
       />
 

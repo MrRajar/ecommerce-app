@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, CommonActions } from '@react-navigation/native';
+import { cartStore } from '../cart/cart/CartStore';
 
 const { width } = Dimensions.get('window');
 
@@ -9,6 +10,9 @@ const Successfully: React.FC = () => {
   const navigation = useNavigation<any>();
 
   useEffect(() => {
+    // Clear the cart on successful order
+    cartStore.clear();
+
     const timer = setTimeout(() => {
       navigation.dispatch(
         CommonActions.reset({

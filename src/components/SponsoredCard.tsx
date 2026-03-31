@@ -5,22 +5,15 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  ImageSourcePropType,
 } from 'react-native';
+import { normalizeImageSource } from '../shared/utlis/normalizeImageSource';
 
 interface Props {
-  image: string | number | ImageSourcePropType;
+  image: string;
   label?: string;
   title?: string;
   onPress?: () => void;
 }
-
-const normalizeImageSource = (
-  img: string | number | ImageSourcePropType
-): ImageSourcePropType => {
-  if (typeof img === 'string') return { uri: img };
-  return img as ImageSourcePropType;
-};
 
 const SponsoredCard: React.FC<Props> = ({
   image,
@@ -29,7 +22,11 @@ const SponsoredCard: React.FC<Props> = ({
   onPress,
 }) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       <Text style={styles.label}>{label}</Text>
 
       <Image source={normalizeImageSource(image)} style={styles.image} />
@@ -50,8 +47,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 12,
     backgroundColor: '#fff',
-    marginBottom: '25%',
+    marginBottom: '10%',
     overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
 
   label: {

@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { normalizeImageSource } from '../shared/utlis/normalizeImageSource';
 
 interface FlatHeelCardProps {
   title: string;
   subTitle?: string;
   buttonText: string;
-  image: any;
+  image: string;
   onPress?: () => void;
 }
 
@@ -18,40 +19,44 @@ const FlatHeelCard: React.FC<FlatHeelCardProps> = ({
 }) => {
   return (
     <View style={styles.cardBox}>
-      {/* Decorative yellow dots */}
       <View style={styles.yellowDotsContainer}>
-        {Array.from({ length: 50, }).map((_, i) => (
+        {Array.from({ length: 50 }).map((_, i) => (
           <View key={i} style={styles.yellowDot} />
         ))}
       </View>
 
-        
-      <Image source={image} style={styles.image} />
-     
+      <Image source={normalizeImageSource(image)} style={styles.image} />
+
       <View style={styles.textContainer}>
-       <Text style={styles.title}>Flat and Heels</Text>
-        {subTitle !== '' && <Text style={styles.subTitle}>Stand a chance to get rewarded</Text>}
-        <TouchableOpacity style={styles.button} onPress={onPress}>
-          <Text style={styles.buttonText}>Visit Now</Text>
+        <Text style={styles.title}>{title}</Text>
+
+        {subTitle !== '' && (
+          <Text style={styles.subTitle}>{subTitle}</Text>
+        )}
+
+        <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+          <Text style={styles.buttonText}>{buttonText}</Text>
         </TouchableOpacity>
       </View>
-
     </View>
   );
 };
 
 export default FlatHeelCard;
+
 const styles = StyleSheet.create({
   cardBox: {
-    width: '88%',height:"7%",
+    width: '88%',
     alignSelf: 'center',
-    backgroundColor: '#F8F8F8', // white card background
+    backgroundColor: '#F8F8F8',
     borderRadius: 12,
     padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    overflow: 'hidden', // to clip decorative dots
+    overflow: 'hidden',
+    marginVertical: 12,
+    minHeight: 130,
   },
 
   yellowDotsContainer: {
@@ -59,7 +64,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 40, // area for decorative dots
+    width: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -68,13 +73,15 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#FFD700', // yellow
+    backgroundColor: '#FFD700',
     margin: 1,
   },
 
   textContainer: {
     flex: 1,
-    justifyContent: 'center',alignItems:"center"
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
 
   title: {
@@ -82,7 +89,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'Montserrat-Regular',
     color: '#000',
-    justifyContent:"center",textAlign:"center"
+    textAlign: 'center',
   },
 
   subTitle: {
@@ -90,22 +97,24 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: '#333',
     marginVertical: 4,
-    fontFamily:"Montserrat"
+    fontFamily: 'Montserrat',
+    textAlign: 'center',
   },
 
   button: {
-    marginTop:4,
-    backgroundColor: '#F83758', // pink button like design
+    marginTop: 6,
+    backgroundColor: '#F83758',
     paddingVertical: 8,
     borderRadius: 3,
-    width:"50%",
-    justifyContent:"flex-end",alignSelf:"flex-end"
+    width: '50%',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
   },
 
   buttonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight:"600",
+    fontWeight: '600',
     textAlign: 'center',
   },
 

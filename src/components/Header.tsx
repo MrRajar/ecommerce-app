@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { DrawerActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import AppIcon from '../shared/utlis/AppIcon';
@@ -47,12 +48,20 @@ const Header: React.FC<HeaderProps> = ({ onAvatarPress, onMenuPress }) => {
       return;
     }
 
-    navigation.navigate('Settings');
+    navigation.navigate('SettingsScreen');
+  };
+
+  const handleMenuPress = () => {
+    if (onMenuPress) {
+      onMenuPress();
+      return;
+    }
+    navigation.dispatch(DrawerActions.openDrawer());
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onMenuPress} activeOpacity={0.8}>
+      <TouchableOpacity onPress={handleMenuPress} activeOpacity={0.8}>
         <AppIcon name="menu" type="material" size={26} />
       </TouchableOpacity>
 

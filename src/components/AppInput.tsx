@@ -62,5 +62,5 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, marginHorizontal: 10 },
   err: { borderColor: 'red' },
-  errText: { color: 'red', fontSize: 12,  },
+  errText: { color: 'red', fontSize: 12, marginTop: 6, paddingLeft: 4 },
 });

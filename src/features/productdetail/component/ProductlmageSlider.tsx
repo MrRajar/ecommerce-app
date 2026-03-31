@@ -49,6 +49,18 @@ const ProductImageSlider: React.FC<Props> = ({
     }
   };
 
+  const goPrev = () => {
+    if (activeIndex > 0) {
+      scrollRef.current?.scrollTo({
+        x: (activeIndex - 1) * width,
+        animated: true,
+      });
+    }
+  };
+
+  const showPrev = showArrow && activeIndex > 0;
+  const showNext = showArrow && activeIndex < images.length - 1;
+
   return (
     <View>
       <View style={[styles.sliderWrap, { height }]}>
@@ -69,9 +81,24 @@ const ProductImageSlider: React.FC<Props> = ({
           ))}
         </ScrollView>
 
-        {/* Right Arrow (like screenshot) */}
-        {showArrow && activeIndex < images.length - 1 && (
-          <TouchableOpacity style={styles.nextBtn} onPress={goNext} activeOpacity={0.85}>
+        {/* Left Arrow - shows on 2nd image onwards */}
+        {showPrev && (
+          <TouchableOpacity
+            style={styles.prevBtn}
+            onPress={goPrev}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.arrow}>‹</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Right Arrow - shows on all except last image */}
+        {showNext && (
+          <TouchableOpacity
+            style={styles.nextBtn}
+            onPress={goNext}
+            activeOpacity={0.85}
+          >
             <Text style={styles.arrow}>›</Text>
           </TouchableOpacity>
         )}
@@ -80,7 +107,10 @@ const ProductImageSlider: React.FC<Props> = ({
       {/* Dots */}
       <View style={styles.dots}>
         {images.map((_, idx) => (
-          <View key={idx} style={[styles.dot, idx === activeIndex && styles.activeDot]} />
+          <View
+            key={idx}
+            style={[styles.dot, idx === activeIndex && styles.activeDot]}
+          />
         ))}
       </View>
     </View>
@@ -91,15 +121,18 @@ export default ProductImageSlider;
 
 const styles = StyleSheet.create({
   sliderWrap: {
-    width:"90%",
+    width: "90%",
     borderRadius: 22,
     overflow: "hidden",
-    backgroundColor: "#f3f3f3",justifyContent:"center",alignSelf:"center"
+    backgroundColor: "#f3f3f3",
+    justifyContent: "center",
+    alignSelf: "center",
   },
   image: {
     width,
-    resizeMode:"cover",
-    justifyContent:"center",alignSelf:"center"
+    resizeMode: "cover",
+    justifyContent: "center",
+    alignSelf: "center",
   },
   dots: {
     flexDirection: "row",
@@ -115,6 +148,17 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     backgroundColor: "#ff3b5c",
+  },
+  prevBtn: {
+    position: "absolute",
+    left: 14,
+    top: "45%",
+    backgroundColor: "rgba(255,255,255,0.85)",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
   },
   nextBtn: {
     position: "absolute",

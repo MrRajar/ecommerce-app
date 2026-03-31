@@ -7,14 +7,13 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import { normalizeImageSource } from '../shared/utlis/normalizeImageSource';
 
 interface Props {
-  image: any;
+  image: string;
   title?: string;
   subtitle?: string;
   onPress?: () => void;
-  showDots?: boolean;
-  activeDotIndex?: number;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -22,7 +21,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const BannerCard: React.FC<Props> = ({
   image,
   title = '50-40% OFF',
-  subtitle = 'Now in (product)\nAll colours',
+  subtitle = 'Now in (product)\n All colours',
   onPress,
 }) => {
   return (
@@ -32,12 +31,11 @@ const BannerCard: React.FC<Props> = ({
         onPress={onPress}
         activeOpacity={0.9}
       >
-        <Image source={image} style={styles.image} />
+        <Image source={normalizeImageSource(image)} style={styles.image} />
 
-        {/* Text Overlay */}
         <View style={styles.overlay}>
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
+          <Text style={styles.subtitle}>{subtitle?.replace(/All colours/i, '\nAll colours').trim()}</Text>
 
           <View style={styles.button}>
             <Text style={styles.buttonText}>Shop Now →</Text>
@@ -51,7 +49,6 @@ const BannerCard: React.FC<Props> = ({
 export default BannerCard;
 
 const styles = StyleSheet.create({
-  // ✅ each banner item = exact one page width (important for correct dots)
   wrapper: {
     width: SCREEN_WIDTH,
     marginBottom: 5,
@@ -60,14 +57,14 @@ const styles = StyleSheet.create({
   },
 
   container: {
-    width: SCREEN_WIDTH - 40, // 20 left + 20 right visual margin
+    width: SCREEN_WIDTH - 40,
     overflow: 'hidden',
     borderRadius: 12,
   },
 
   image: {
     width: '100%',
-    height: 180,
+    height: 200,
     resizeMode: 'cover',
   },
 
@@ -82,13 +79,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     fontFamily: 'Montserrat',
+    paddingTop:20
   },
 
   subtitle: {
     color: '#fff',
     fontSize: 14,
     marginVertical: 6,
-    lineHeight: 18,
+    lineHeight: 20,
     fontFamily: 'Montserrat',
   },
 
@@ -96,7 +94,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 7,
-    borderRadius: 14,
+    borderRadius: 5,
     marginTop: 8,
     borderWidth: 1,
     borderColor: '#fff',
@@ -106,23 +104,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
-  },
-
-  // (unused in this component now, dots Home.tsx handles)
-  dotsContainer: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#D9D9D9',
-    marginHorizontal: 4,
-  },
-
-  activeDot: {
-    backgroundColor: '#FFA3B3',
   },
 });

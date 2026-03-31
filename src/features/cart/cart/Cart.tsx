@@ -10,8 +10,8 @@ import BottomBar from "../../cart/component/BottomBar";
 import SimplePicker from "../../cart/component/SimplePicker";
 
 type RouteParams = {
-  product?: CartItem;    
-  cartItems?: CartItem[];  
+  product?: CartItem;
+  cartItems?: CartItem[];
 };
 
 const Cart: React.FC = () => {
@@ -57,10 +57,12 @@ const Cart: React.FC = () => {
 
   const [picker, setPicker] = useState<null | { type: "size" | "qty"; id: string }>(null);
 
+  // Dynamic price calculation from backend data
   const amounts = useMemo(() => {
     const orderAmount = data.reduce((sum, it) => {
       const q = selectedQty[it.id] || 1;
-      return sum + it.price * q;
+      const price = Number(it.price) || 0;
+      return sum + price * q;
     }, 0);
 
     const convenience = 0;
@@ -70,17 +72,23 @@ const Cart: React.FC = () => {
     return { orderAmount, convenience, deliveryFee, total };
   }, [data, selectedQty]);
 
+  // Prepare cart items with updated size & qty for next screen
+  const preparedCartItems = useMemo(() => {
+    return data.map((it) => ({
+      ...it,
+      size: selectedSize[it.id] || it.size,
+      qty: selectedQty[it.id] || it.qty || 1,
+    }));
+  }, [data, selectedSize, selectedQty]);
+
   if (!data.length) {
     return (
       <SafeAreaView style={styles.container}>
-
-        <CartHeader title="Shopping Bag" onBack={() => navigation.goBack()} onHeart={() => { }} />
-        <ScrollView>
-        <View style={styles.emptyWrap}>
+        <CartHeader title="Shopping Bag" onBack={() => navigation.goBack()} onHeart={() => {}} />
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingBottom: 60 }}>
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
           <Text style={styles.emptySub}>Add a product from Product Detail, then come back.</Text>
         </View>
-        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -89,16 +97,15 @@ const Cart: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Checkout</Text>
+        <View style={{ width: 24 }} />
+      </View>
 
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Checkout</Text>
-          <View style={{ width: 24 }} />
-        </View>
       <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-          
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Delivery Address</Text>
           <View style={styles.addressRow}>
@@ -110,7 +117,7 @@ const Cart: React.FC = () => {
                 </TouchableOpacity>
               </View>
               <Text style={styles.addressText}>
-                216 St Paul's Rd, London N1 2LL, UK{'\n'}Contact : +44-784232
+                216 St Paul's Rd, London N1 2LL, UK{"\n"}Contact : +44-784232
               </Text>
             </View>
             <TouchableOpacity style={styles.addAddressBtn}>
@@ -119,7 +126,7 @@ const Cart: React.FC = () => {
           </View>
         </View>
 
-        {/* Shopping List */}
+        {/* Shopping List - All data from backend */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Shopping List</Text>
 
@@ -135,38 +142,66 @@ const Cart: React.FC = () => {
           ))}
         </View>
 
-      <BottomBar
-        amount={amounts.total}
-        onViewDetails={() => { }}
-        onProceed={() => {
-          navigation.replace("Shipping", { cartItems: data });
-        }}
-      />
+        {/* Order Summary - Dynamic from backend prices */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Order Payment Details</Text>
 
-      <SimplePicker
-        visible={picker?.type === "size"}
-        title="Select Size"
-        options={pickerItem?.sizes?.map(String) || []}
-        selected={picker?.id ? selectedSize[picker.id] : undefined}
-        onClose={() => setPicker(null)}
-        onSelect={(v) => {
-          if (!picker?.id) return;
-          setSelectedSize((p) => ({ ...p, [picker.id]: v }));
-        }}
-      />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Order Amounts</Text>
+            <Text style={styles.summaryValue}>
+              ₹{amounts.orderAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </Text>
+          </View>
 
-      <SimplePicker
-        visible={picker?.type === "qty"}
-        title="Select Quantity"
-        options={Array.from({ length: 10 }, (_, i) => String(i + 1))}
-        selected={picker?.id ? String(selectedQty[picker.id] || 1) : "1"}
-        onClose={() => setPicker(null)}
-        onSelect={(v) => {
-          if (!picker?.id) return;
-          const n = Math.max(1, Number(v) || 1);
-          setSelectedQty((p) => ({ ...p, [picker.id]: n }));
-        }}
-      />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Delivery Fee</Text>
+            <Text style={styles.freeText}>
+              {amounts.deliveryFee === 0 ? "Free" : `₹${amounts.deliveryFee.toLocaleString("en-IN")}`}
+            </Text>
+          </View>
+
+          <View style={styles.summaryDivider} />
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.totalLabel}>Order Total</Text>
+            <Text style={styles.totalValue}>
+              ₹{amounts.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </Text>
+          </View>
+        </View>
+
+        <BottomBar
+          amount={amounts.total}
+          onViewDetails={() => {}}
+          onProceed={() => {
+            navigation.replace("Shipping", { cartItems: preparedCartItems });
+          }}
+        />
+
+        <SimplePicker
+          visible={picker?.type === "size"}
+          title="Select Size"
+          options={pickerItem?.sizes?.map(String) || []}
+          selected={picker?.id ? selectedSize[picker.id] : undefined}
+          onClose={() => setPicker(null)}
+          onSelect={(v) => {
+            if (!picker?.id) return;
+            setSelectedSize((p) => ({ ...p, [picker.id]: v }));
+          }}
+        />
+
+        <SimplePicker
+          visible={picker?.type === "qty"}
+          title="Select Quantity"
+          options={Array.from({ length: 10 }, (_, i) => String(i + 1))}
+          selected={picker?.id ? String(selectedQty[picker.id] || 1) : "1"}
+          onClose={() => setPicker(null)}
+          onSelect={(v) => {
+            if (!picker?.id) return;
+            const n = Math.max(1, Number(v) || 1);
+            setSelectedQty((p) => ({ ...p, [picker.id]: n }));
+          }}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -175,44 +210,58 @@ const Cart: React.FC = () => {
 export default Cart;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffff",paddingTop:"2%" }, // Light gray bg for contrast
+  container: { flex: 1, backgroundColor: "#ffff", paddingTop: "2%" },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
-    marginTop:25
+    backgroundColor: "#fff",
+    marginTop: 25,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontWeight: "700", color: "#000" },
   backBtn: { padding: 4 },
 
   section: { paddingHorizontal: 16, marginTop: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#000', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: "600", color: "#000", marginBottom: 12 },
 
-  addressRow: { flexDirection: 'row', gap: 12 },
+  addressRow: { flexDirection: "row", gap: 12 },
   addressCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
-    elevation: 2, // shadow
+    elevation: 2,
   },
-  addressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  addressLabel: { fontSize: 14, fontWeight: '500', color: '#000' },
-  addressText: { fontSize: 12, color: '#666', lineHeight: 18 },
+  addressHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
+  addressLabel: { fontSize: 14, fontWeight: "500", color: "#000" },
+  addressText: { fontSize: 12, color: "#666", lineHeight: 18 },
 
   addAddressBtn: {
     width: 60,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 2,
   },
 
-  emptyWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 40, alignItems: 'center' },
+  // Order Summary styles
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  summaryLabel: { fontSize: 14, color: "#888" },
+  summaryValue: { fontSize: 14, fontWeight: "700", color: "#000" },
+  freeText: { fontSize: 14, color: "#ea4c89", fontWeight: "700" },
+  summaryDivider: { height: 1, backgroundColor: "#f0f0f0", marginVertical: 8 },
+  totalLabel: { fontSize: 16, fontWeight: "700", color: "#000" },
+  totalValue: { fontSize: 16, fontWeight: "700", color: "#000" },
+
+  emptyWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 40, alignItems: "center" },
   emptyTitle: { fontSize: 18, fontWeight: "800", color: "#111" },
   emptySub: { marginTop: 8, fontSize: 13, color: "#777" },
 });

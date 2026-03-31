@@ -1,185 +1,228 @@
-import firestore, {
-  FirebaseFirestoreTypes,
-} from '@react-native-firebase/firestore';
+import { db } from '../config/firebase';
 
-export const db = firestore();
-
-export type FsProduct = {
-  id: string;
-  title: string;
-  price: number;
-  oldPrice?: number;
-  rating?: number;
-  ratingCount?: number;
-  category?: string;
-  categoryId?: string;
-  categoryTitle?: string;
-  images?: string[];
-  image?: string;
-  imageUrl?: string;
+type FirestoreProduct = {
+  id?: string | number;
+  title?: string;
   description?: string;
-  subtitle?: string;
-  sizes?: string[];
-  tags?: string[];
+  imageUrl?: string;
+  images?: string[];
+  price?: string | number;
+  oldprice?: string | number;
+  rating?: string | number;
+  ratingcount?: string | number;
+  stock?: string | number;
   isTrending?: boolean;
   isDeal?: boolean;
-  isWishlist?: boolean;
-  stock?: number;
-  createdAt?: any;
-  [key: string]: any;
+  categoryId?: string;
+  categoryTitle?: string;
+  sizes?: string[];
 };
 
-type DocSnap =
-  FirebaseFirestoreTypes.DocumentSnapshot<FirebaseFirestoreTypes.DocumentData>;
-
-const cleanString = (value: any) =>
-  typeof value === 'string' ? value.trim() : '';
-
-const toNumber = (value: any, fallback = 0) => {
-  const num = Number(value);
-  return Number.isFinite(num) ? num : fallback;
+type FirestoreCategory = {
+  name?: string;
+  image?: string;
+  isActive?: boolean;
+  order?: number | string;
 };
 
-const normalizeUrl = (value: any) => {
-  const clean = typeof value === 'string' ? value.trim() : '';
-
-  if (!clean) return '';
-
-  if (clean.startsWith('//')) return encodeURI(`https:${clean}`);
-  if (clean.startsWith('http://') || clean.startsWith('https://')) {
-    return encodeURI(clean);
-  }
-
-  return encodeURI(clean);
+type FirestoreBanner = {
+  title?: string;
+  subtitle?: string;
+  image?: string;
+  isActive?: boolean;
+  sortOrder?: number | string;
 };
 
-const pickImages = (data: any): string[] => {
-  if (!Array.isArray(data.images)) return [];
-
-  return data.images
-    .map((img: any) => {
-      if (typeof img === 'string') return normalizeUrl(img);
-
-      if (img && typeof img === 'object') {
-        return normalizeUrl(
-          img.secure_url || img.url || img.image || img.imageUrl
-        );
-      }
-
-      return '';
-    })
-    .filter(Boolean);
+type FirestoreOffer = {
+  key?: string;
+  title?: string;
+  subtitle?: string;
+  image?: string;
+  imageUrl?: string;
+  isActive?: boolean;
 };
 
-const pickImage = (data: any, images: string[]): string => {
-  const direct = [
-    data.image,
-    data.imageUrl,
-    data.thumbnail,
-    data.photoUrl,
-    data.secure_url,
-    data.url,
-  ]
-    .map(normalizeUrl)
-    .filter(Boolean);
-
-  if (direct.length > 0) return direct[0];
-  if (images.length > 0) return images[0];
-
-  return '';
+export type AppProduct = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  oldprice?: number;
+  rating: number;
+  ratingcount?: number;
+  stock: number;
+  image: string;
+  imageUrl?: string;
+  images: string[];
+  category: string;
+  categoryId?: string;
+  sizes: string[];
+  isTrending?: boolean;
+  isDeal?: boolean;
 };
 
-const mapProductDoc = (doc: DocSnap): FsProduct => {
-  const data = (doc.data() || {}) as any;
+export type AppCategory = {
+  id: string;
+  title: string;
+  image: string;
+  isActive: boolean;
+  order: number;
+};
 
-  const images = pickImages(data);
-  const image = pickImage(data, images);
+export type AppBanner = {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  isActive: boolean;
+  sortOrder: number;
+};
 
-  const tags = Array.isArray(data.tags)
-    ? data.tags.map((tag: any) => String(tag).toLowerCase().trim())
-    : [];
+export type AppOffer = {
+  id: string;
+  key: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  isActive: boolean;
+};
 
-  const price = toNumber(data.price, 0);
-  const oldPrice =
-    data.oldPrice !== undefined
-      ? toNumber(data.oldPrice)
-      : data.oldprice !== undefined
-      ? toNumber(data.oldprice)
-      : undefined;
+export type HomeDataResponse = {
+  products: AppProduct[];
+  categories: AppCategory[];
+  banners: AppBanner[];
+  offers: AppOffer[];
+};
 
-  const rating =
-    data.rating !== undefined ? toNumber(data.rating, 4) : 4;
+const toNumber = (value: unknown, fallback = 0): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
 
-  const ratingCount =
-    data.ratingCount !== undefined
-      ? toNumber(data.ratingCount, 0)
-      : data.ratingcount !== undefined
-      ? toNumber(data.ratingcount, 0)
-      : 0;
+const toStringValue = (value: unknown, fallback = ''): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  return fallback;
+};
 
-  const normalizedCategory =
-    cleanString(data.category) ||
-    cleanString(data.categoryTitle) ||
-    cleanString(data.categoryId);
+const mapProduct = (
+  docId: string,
+  raw: FirestoreProduct | undefined
+): AppProduct => {
+  const imageFromArray =
+    Array.isArray(raw?.images) && raw?.images.length > 0
+      ? raw.images[0]
+      : '';
 
-  const sizes = Array.isArray(data.sizes)
-    ? data.sizes.map((size: any) => String(size))
-    : ['6 UK', '7 UK', '8 UK', '9 UK', '10 UK'];
+  const image = toStringValue(raw?.imageUrl, imageFromArray);
 
   return {
-    ...data,
-    id: String(data.id ?? doc.id),
-    title: String(data.title || data.name || ''),
-    price,
-    oldPrice,
-    rating,
-    ratingCount,
-    category: normalizedCategory.toLowerCase(),
-    categoryId: cleanString(data.categoryId).toLowerCase(),
-    categoryTitle: cleanString(data.categoryTitle),
-    description: String(data.description || ''),
-    subtitle: String(data.subtitle || ''),
+    id: toStringValue(raw?.id, docId || ''),
+    title: toStringValue(raw?.title, 'Untitled Product'),
+    description: toStringValue(raw?.description, ''),
+    price: toNumber(raw?.price, 0),
+    oldprice: toNumber(raw?.oldprice, 0),
+    rating: toNumber(raw?.rating, 0),
+    ratingcount: toNumber(raw?.ratingcount, 0),
+    stock: toNumber(raw?.stock, 0),
     image,
-    imageUrl: normalizeUrl(data.imageUrl),
-    images,
-    sizes,
-    tags,
-    isTrending:
-      Boolean(data.isTrending) ||
-      tags.includes('trending') ||
-      tags.includes('trend'),
-    isDeal:
-      Boolean(data.isDeal) ||
-      tags.includes('deal') ||
-      tags.includes('deals') ||
-      (oldPrice !== undefined && oldPrice > price),
-    isWishlist: Boolean(data.isWishlist) || tags.includes('wishlist'),
-    stock: data.stock !== undefined ? toNumber(data.stock) : undefined,
-    createdAt: data.createdAt,
+    imageUrl: toStringValue(raw?.imageUrl, image),
+    images: Array.isArray(raw?.images)
+      ? raw!.images.filter((item) => typeof item === 'string' && item.trim())
+      : image
+      ? [image]
+      : [],
+    category: toStringValue(raw?.categoryTitle, 'Uncategorized'),
+    categoryId: toStringValue(raw?.categoryId, ''),
+    sizes: Array.isArray(raw?.sizes)
+      ? raw!.sizes.filter((item) => typeof item === 'string')
+      : [],
+    isTrending: Boolean(raw?.isTrending),
+    isDeal: Boolean(raw?.isDeal),
   };
 };
 
-// Firebase path from your screenshots:
-// products / products / products / {doc}
-export const getAllProducts = async (limit = 200): Promise<FsProduct[]> => {
-  const snap = await db
-    .collection('products')
-    .doc('products')
-    .collection('products')
-    .limit(limit)
-    .get();
+const mapCategory = (
+  docId: string,
+  raw: FirestoreCategory | undefined
+): AppCategory => ({
+  id: docId,
+  title: toStringValue(raw?.name, 'Category'),
+  image: toStringValue(raw?.image, ''),
+  isActive: Boolean(raw?.isActive),
+  order: toNumber(raw?.order, 0),
+});
 
-  const items = snap.docs.map(mapProductDoc);
+const mapBanner = (
+  docId: string,
+  raw: FirestoreBanner | undefined
+): AppBanner => ({
+  id: docId,
+  title: toStringValue(raw?.title, ''),
+  subtitle: toStringValue(raw?.subtitle, ''),
+  image: toStringValue(raw?.image, ''),
+  isActive: Boolean(raw?.isActive),
+  sortOrder: toNumber(raw?.sortOrder, 0),
+});
 
-  console.log(
-    'FIREBASE PRODUCTS =>',
-    items.map((item) => ({
-      title: item.title,
-      images: item.images,
-      imageUrl: item.imageUrl,
-      firstImage: item.images?.[0],
-    }))
-  );
+const mapOffer = (
+  docId: string,
+  raw: FirestoreOffer | undefined
+): AppOffer => ({
+  id: docId,
+  key: toStringValue(raw?.key, docId),
+  title: toStringValue(raw?.title, ''),
+  subtitle: toStringValue(raw?.subtitle, ''),
+  image: toStringValue(raw?.imageUrl ?? raw?.image, ''),
+  isActive: Boolean(raw?.isActive),
+});
 
-  return items.filter((item) => item.title);
+export const getAllProducts = async (): Promise<AppProduct[]> => {
+  const snapshot = await db.collection('products').get();
+
+  return snapshot.docs
+    .map((doc) => mapProduct(doc.id, doc.data() as FirestoreProduct))
+    .filter((item) => item.title.trim().length > 0);
+};
+
+export const getAllCategories = async (): Promise<AppCategory[]> => {
+  const snapshot = await db.collection('categories').get();
+
+  return snapshot.docs
+    .map((doc) => mapCategory(doc.id, doc.data() as FirestoreCategory))
+    .filter((item) => item.isActive)
+    .sort((a, b) => a.order - b.order);
+};
+
+export const getAllBanners = async (): Promise<AppBanner[]> => {
+  const snapshot = await db.collection('banners').get();
+
+  return snapshot.docs
+    .map((doc) => mapBanner(doc.id, doc.data() as FirestoreBanner))
+    .filter((item) => item.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+};
+
+export const getAllOffers = async (): Promise<AppOffer[]> => {
+  const snapshot = await db.collection('offers').get();
+
+  return snapshot.docs
+    .map((doc) => mapOffer(doc.id, doc.data() as FirestoreOffer))
+    .filter((item) => item.isActive);
+};
+
+export const getHomeData = async (): Promise<HomeDataResponse> => {
+  const [products, categories, banners, offers] = await Promise.all([
+    getAllProducts(),
+    getAllCategories(),
+    getAllBanners(),
+    getAllOffers(),
+  ]);
+
+  return {
+    products,
+    categories,
+    banners,
+    offers,
+  };
 };

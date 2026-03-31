@@ -15,10 +15,16 @@ const CartItemCard: React.FC<{
   onPressSize: () => void;
   onPressQty: () => void;
 }> = ({ item, size, qty, onPressSize, onPressQty }) => {
+  const normalizeImage = (img: any) => {
+    if (typeof img === 'string') return { uri: img };
+    return img;
+  };
+  const productImage = item.image || (item as any).imageUrl || (item as any).images?.[0];
+
   return (
     <View style={styles.cardContainer}>
       <View style={styles.cardContent}>
-        <Image source={item.image} style={styles.image} />
+        <Image source={productImage ? normalizeImage(productImage) : undefined} style={styles.image} />
 
         <View style={styles.details}>
           <Text style={styles.title}>{item.title}</Text>

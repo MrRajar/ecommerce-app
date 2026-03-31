@@ -4,22 +4,15 @@ import {
   Text,
   Image,
   StyleSheet,
-  ImageSourcePropType,
 } from 'react-native';
+import { normalizeImageSource } from '../shared/utlis/normalizeImageSource';
 
 interface SpecialOfferCardProps {
-  image: string | number | ImageSourcePropType;
+  image: string;
   title: string;
   description: string;
   emoji?: string;
 }
-
-const normalizeImageSource = (
-  img: string | number | ImageSourcePropType
-): ImageSourcePropType => {
-  if (typeof img === 'string') return { uri: img };
-  return img as ImageSourcePropType;
-};
 
 const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   image,

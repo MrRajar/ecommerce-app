@@ -8,25 +8,41 @@ const PlaceOrder: React.FC = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
 
-  
     const { product } = route.params || {};
 
-   
     const item = product || {
         id: '1',
         title: "Women's Casual Wear",
         subtitle: "Checked Single-Breasted Blazer",
-        price: 34,
-        size: '42',
+        price: 0,
+        size: 'M',
         qty: 1,
-        image: null, 
-        deliveryText: "Delivery by 10 May 2XXX"
+        image: null,
     };
+
+    // Dynamic price calculations from backend data
+    const qty = item.qty || 1;
+    const unitPrice = Number(item.price) || 0;
+    const orderAmount = unitPrice * qty;
+    const deliveryFee = 0;
+    const convenienceFee = 0;
+    const orderTotal = orderAmount + deliveryFee + convenienceFee;
+
+    // Dynamic delivery date (7 days from now)
+    const deliveryDate = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `Delivery by ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }, []);
 
     const normalizeImage = (img: any) => {
         if (typeof img === 'string') return { uri: img };
         return img;
     };
+
+    // Get image from backend data
+    const productImage = item.image || item.imageUrl || item.images?.[0];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -42,16 +58,16 @@ const PlaceOrder: React.FC = () => {
 
             <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
-                {/* Product Card */}
+                {/* Product Card - All data from backend */}
                 <View style={styles.productCard}>
                     <Image
-                        source={item.image ? normalizeImage(item.image) : AppImages.product1}
+                        source={productImage ? normalizeImage(productImage) : AppImages.product1}
                         style={styles.productImage}
                         resizeMode="cover"
                     />
                     <View style={styles.productDetails}>
-                        <Text style={styles.productTitle}>{item.title || item.name}</Text>
-                        <Text style={styles.productSubtitle}>{item.subtitle || item.description}</Text>
+                        <Text style={styles.productTitle}>{item.title || item.name || 'Product'}</Text>
+                        <Text style={styles.productSubtitle}>{item.subtitle || item.description || ''}</Text>
 
                         <View style={styles.optionsRow}>
                             <View style={styles.optionBadge}>
@@ -59,12 +75,12 @@ const PlaceOrder: React.FC = () => {
                                 <Ionicons name="chevron-down" size={12} color="#000" />
                             </View>
                             <View style={styles.optionBadge}>
-                                <Text style={styles.optionText}>Qty {item.qty || 1}</Text>
+                                <Text style={styles.optionText}>Qty {qty}</Text>
                                 <Ionicons name="chevron-down" size={12} color="#000" />
                             </View>
                         </View>
 
-                        <Text style={styles.deliveryText}>{item.deliveryText || 'Delivery by 10 May 2XXX'}</Text>
+                        <Text style={styles.deliveryText}>{item.deliveryText || deliveryDate}</Text>
                     </View>
                 </View>
 
@@ -82,7 +98,7 @@ const PlaceOrder: React.FC = () => {
 
                     <View style={styles.row}>
                         <Text style={styles.label}>Order Amounts</Text>
-                        <Text style={styles.value}>₹ 7,000.00</Text>
+                        <Text style={styles.value}>₹{orderAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
                     </View>
 
                     <View style={styles.row}>
@@ -95,14 +111,14 @@ const PlaceOrder: React.FC = () => {
 
                     <View style={styles.row}>
                         <Text style={styles.label}>Delivery Fee</Text>
-                        <Text style={styles.freeText}>Free</Text>
+                        <Text style={styles.freeText}>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toLocaleString('en-IN')}`}</Text>
                     </View>
 
                     <View style={styles.divider} />
 
                     <View style={styles.row}>
                         <Text style={styles.totalLabel}>Order Total</Text>
-                        <Text style={styles.totalValue}>₹ 7,000.00</Text>
+                        <Text style={styles.totalValue}>₹{orderTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
                     </View>
 
                     <View style={styles.row}>
@@ -118,7 +134,7 @@ const PlaceOrder: React.FC = () => {
 
             <View style={styles.bottomBar}>
                 <View>
-                    <Text style={styles.bottomTotal}>₹ 7,000.00</Text>
+                    <Text style={styles.bottomTotal}>₹{orderTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
                     <Text style={styles.viewDetails}>View Details</Text>
                 </View>
                 <TouchableOpacity
@@ -142,7 +158,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 16,
-        marginTop:25
+        marginTop: 25,
     },
     headerTitle: { fontSize: 18, fontWeight: '700' },
 
@@ -152,9 +168,9 @@ const styles = StyleSheet.create({
     },
     productImage: {
         width: 100,
-        height: 120, // Taller image as per design
+        height: 120,
         borderRadius: 8,
-        backgroundColor: '#f0f0f0'
+        backgroundColor: '#f0f0f0',
     },
     productDetails: {
         flex: 1,
@@ -175,7 +191,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
-        gap: 6
+        gap: 6,
     },
     optionText: { fontSize: 12, fontWeight: '600' },
     deliveryText: { fontSize: 12, color: '#444' },
@@ -217,7 +233,7 @@ const styles = StyleSheet.create({
     bottomTotal: { fontSize: 18, fontWeight: '700' },
     viewDetails: { fontSize: 12, color: '#F83758' },
     proceedBtn: {
-        backgroundColor: '#F83758', // Pinkish red from design
+        backgroundColor: '#F83758',
         paddingVertical: 14,
         paddingHorizontal: 24,
         borderRadius: 8,

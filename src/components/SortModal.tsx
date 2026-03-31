@@ -29,6 +29,8 @@ const SortModal: React.FC<SortModalProps> = ({
       animationType="slide"
       visible={visible}
       onRequestClose={onClose}
+      presentationStyle="overFullScreen"
+      statusBarTranslucent={true}
     >
       <Pressable style={styles.overlay} onPress={onClose} />
 

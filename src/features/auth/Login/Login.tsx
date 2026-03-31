@@ -53,7 +53,7 @@ const Login = ({ navigation }: any) => {
     }
 
     if (!password) {
-      setPasswordError("Password is required");
+      setPasswordError("Required");
       valid = false;
     } else if (password.length < 6) {
       setPasswordError("Password must be at least 6 characters");
@@ -186,7 +186,7 @@ const Login = ({ navigation }: any) => {
 
           <TouchableOpacity
             style={styles.forgotContainer}
-            onPress={() => navigation.replace("ForgotPassword")}
+            onPress={() => navigation.navigate("ForgotPassword")}
           >
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>

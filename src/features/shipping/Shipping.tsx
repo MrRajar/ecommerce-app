@@ -1,11 +1,25 @@
 import React, { useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const Shipping: React.FC = () => {
     const navigation = useNavigation<any>();
+    const route = useRoute<any>();
     const [selectedMethod, setSelectedMethod] = useState('visa');
+
+    const { product, cartItems } = route.params || {};
+
+    let orderAmount = 0;
+    let deliveryFee = 0;
+
+    if (product) {
+        orderAmount = Number(product.price || 0) * (product.qty || 1);
+    } else if (cartItems && cartItems.length > 0) {
+        orderAmount = cartItems.reduce((sum: number, it: any) => sum + (Number(it.price) || 0) * (it.qty || 1), 0);
+    }
+
+    const orderTotal = orderAmount + deliveryFee;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -22,15 +36,15 @@ const Shipping: React.FC = () => {
                 <View style={styles.summarySection}>
                     <View style={styles.row}>
                         <Text style={styles.label}>Order</Text>
-                        <Text style={styles.value}>₹ 7,000</Text>
+                        <Text style={styles.value}>₹ {orderAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
                     </View>
                     <View style={styles.row}>
                         <Text style={styles.label}>Shipping</Text>
-                        <Text style={styles.value}>₹ 30</Text>
+                        <Text style={styles.value}>{deliveryFee === 0 ? 'Free' : `₹ ${deliveryFee.toLocaleString('en-IN')}`}</Text>
                     </View>
                     <View style={styles.row}>
                         <Text style={styles.labeltotal}>Total</Text>
-                        <Text style={styles.valuetotal}>₹ 7,030</Text>
+                        <Text style={styles.valuetotal}>₹ {orderTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
                     </View>
                 </View>
 
