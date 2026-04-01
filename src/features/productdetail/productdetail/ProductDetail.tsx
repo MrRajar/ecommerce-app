@@ -36,7 +36,7 @@ const ProductDetail: React.FC<Props> = ({ navigation, route }) => {
     allProducts?: Product[];
   };
 
-  const [selectedSize, setSelectedSize] = useState<string>('7 UK');
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity] = useState<number>(1);
   const [showMore, setShowMore] = useState(false);
 
@@ -115,6 +115,17 @@ const ProductDetail: React.FC<Props> = ({ navigation, route }) => {
     product?.ratingcount ?? product?.ratingCount ?? 56890,
   );
 
+  const requiresSize = useMemo(() => {
+    const hasSizes = product?.sizes && product.sizes.length > 0;
+    const isShoeCategory = ['fashion', 'shoes', 'footwear'].includes(
+      product?.category?.toLowerCase() || ''
+    );
+    const isShoeTitle = /shoe|sneaker|boot|heel|sandal|runner|retro|jordan/i.test(
+      product?.title || product?.name || ''
+    );
+    return hasSizes || isShoeCategory || isShoeTitle;
+  }, [product]);
+
   const oldPrice = Math.round(
     Number(product?.oldprice ?? product?.oldPrice ?? (product?.price ? product.price * 2 : 0)),
   );
@@ -139,6 +150,10 @@ Made famous in 1985, the shoe has stood the test of time, becoming one of the mo
   };
 
   const handleAddToCart = () => {
+    if (requiresSize && !selectedSize) {
+      Alert.alert('Select Size', 'Please select a size before adding to cart.');
+      return;
+    }
     // ✅ FIX: Handle Firebase string URLs for cart image
     const cartImage: ImageInput =
       product?.image ?? product?.imageUrl ?? product?.images?.[0] ?? '';
@@ -156,6 +171,10 @@ Made famous in 1985, the shoe has stood the test of time, becoming one of the mo
   };
 
   const handleBuyNow = () => {
+    if (requiresSize && !selectedSize) {
+      Alert.alert('Select Size', 'Please select a size to proceed.');
+      return;
+    }
     navigation.replace('PlaceOrder', {
       product: {
         ...product,
@@ -222,22 +241,12 @@ Made famous in 1985, the shoe has stood the test of time, becoming one of the mo
 
         <View style={styles.content}>
           {(() => {
-            const hasSizes = product?.sizes && product.sizes.length > 0;
-            // Only use specific shoe/fashion categories, not generic like 'women' which could be bags
-            const isShoeCategory = ['fashion', 'shoes', 'footwear'].includes(
-              product?.category?.toLowerCase() || ''
-            );
-            // Catch all shoes by title keywords
-            const isShoeTitle = /shoe|sneaker|boot|heel|sandal|runner|retro|jordan/i.test(
-              product?.title || product?.name || ''
-            );
-
-            // Show sizes if it has explicit sizes, OR if we can infer it's a shoe
-            if (hasSizes || isShoeCategory || isShoeTitle) {
+            if (requiresSize) {
+              const hasSizes = product?.sizes && product.sizes.length > 0;
               return (
                 <SizeSelector
                   sizes={
-                    hasSizes && product.sizes
+                    hasSizes && product?.sizes
                       ? product.sizes
                       : ['6 UK', '7 UK', '8 UK', '9 UK', '10 UK']
                   }
@@ -252,7 +261,9 @@ Made famous in 1985, the shoe has stood the test of time, becoming one of the mo
           <Text style={styles.title}>
             {product?.title || product?.name}
           </Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
 
           <View style={styles.ratingRow}>
             <Text style={styles.starText}>{stars(ratingValue)}</Text>
@@ -272,17 +283,18 @@ Made famous in 1985, the shoe has stood the test of time, becoming one of the mo
           </View>
 
           <Text style={styles.sectionTitle}>Product Details</Text>
-          <Text
-            style={styles.detailsText}
-            numberOfLines={showMore ? undefined : 4}>
-            {detailsText}
-          </Text>
-
-          <TouchableOpacity onPress={() => setShowMore(prev => !prev)}>
-            <Text style={styles.moreText}>
-              {showMore ? 'Less' : '…More'}
+          {detailsText.length > 150 ? (
+            <Text style={styles.detailsText}>
+              {showMore ? detailsText : `${detailsText.substring(0, 150).trim()}... `}
+              <Text
+                style={styles.moreText}
+                onPress={() => setShowMore(prev => !prev)}>
+                {showMore ? 'Less' : 'More'}
+              </Text>
             </Text>
-          </TouchableOpacity>
+          ) : (
+            <Text style={styles.detailsText}>{detailsText}</Text>
+          )}
 
           <View style={styles.chipsRow}>
             <View style={styles.chip}>
