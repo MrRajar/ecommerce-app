@@ -73,9 +73,9 @@ const TrendingProduct: React.FC<Props> = ({ navigation, route }) => {
       case 'trending':
         return normalizedProducts.filter((p: any) => p.isTrending === true);
       case 'category':
-        return normalizedProducts.filter((p: any) => 
+        return normalizedProducts.filter((p: any) =>
           p.categoryId === categoryId ||
-          p.category === categoryTitle || 
+          p.category === categoryTitle ||
           p.category?.toLowerCase() === categoryTitle?.toLowerCase()
         );
       case 'all':
