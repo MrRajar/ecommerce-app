@@ -189,11 +189,12 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         width: '100%',
-        maxHeight: '80%',
+        maxHeight: '100%',
         backgroundColor: '#FDFDFD',
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
         padding: 20,
+        
     },
     title: { fontSize: 18, fontWeight: '700', marginBottom: 16, color: '#000' },
     label: { fontSize: 14, fontWeight: '600', marginTop: 12, marginBottom: 6 },
