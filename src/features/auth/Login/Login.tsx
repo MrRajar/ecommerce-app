@@ -38,7 +38,7 @@ const Login = ({ navigation }: any) => {
   }, []);
 
   const validateAndLogin = async () => {
-    if (isLoginLoading || isGoogleLoading) return; // duplicate tap block
+    if (isLoginLoading || isGoogleLoading) return;
 
     let valid = true;
 
@@ -85,15 +85,14 @@ const Login = ({ navigation }: any) => {
     }
   };
 
-  // Google button press -> Google account select -> Firebase sign-in
   const onGoogleButtonPress = async () => {
-    if (isGoogleLoading || isLoginLoading) return; // duplicate tap block
+    if (isGoogleLoading || isLoginLoading) return;
 
     try {
       setIsGoogleLoading(true);
 
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
+      await GoogleSignin.signOut(); // har baar account chooser dikhaye
       const signInResult: any = await GoogleSignin.signIn();
 
       const idToken = signInResult?.data?.idToken || signInResult?.idToken;

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  PermissionsAndroid,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -155,6 +156,25 @@ const SettingsScreen: React.FC = () => {
         return;
       }
 
+      // Runtime camera permission request
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: 'Camera Permission',
+          message: 'App needs camera access to take a profile picture.',
+          buttonPositive: 'Allow',
+          buttonNegative: 'Deny',
+        }
+      );
+
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        Alert.alert(
+          'Permission Denied',
+          'Camera permission denied. Please enable it from app settings.'
+        );
+        return;
+      }
+
       setIsPickingImage(true);
 
       const image = await ImageCropPicker.openCamera({
@@ -266,7 +286,6 @@ const SettingsScreen: React.FC = () => {
       setIsLogoutLoading(true);
 
       await auth().signOut();
-      // User requested explicitly: pic should NOT be removed even after multiple login/logouts.
 
       navigation.reset({
         index: 0,
@@ -350,8 +369,6 @@ const SettingsScreen: React.FC = () => {
           />
 
           <Text style={styles.sectionTitle}>Personal Details</Text>
-
-
 
           <SettingsInputField
             label="Name"

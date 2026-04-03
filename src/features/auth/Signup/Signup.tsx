@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import AppButton from "../../../components/AppButton";
 import SocialButton from "../../../components/SocialButton";
 
 import auth from "@react-native-firebase/auth";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 
 const Signup = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -28,11 +29,18 @@ const Signup = ({ navigation }: any) => {
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
 
-  // ✅ loading state
   const [isSignupLoading, setIsSignupLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        "628932099560-taslka7vc9c14h54vfv7g9j3ktnhi8ot.apps.googleusercontent.com",
+    });
+  }, []);
 
   const validateAndSignup = async () => {
-    if (isSignupLoading) return; // duplicate tap block
+    if (isSignupLoading || isGoogleLoading) return;
 
     let valid = true;
 
@@ -89,6 +97,49 @@ const Signup = ({ navigation }: any) => {
     }
   };
 
+  const onGoogleButtonPress = async () => {
+    if (isGoogleLoading || isSignupLoading) return;
+
+    try {
+      setIsGoogleLoading(true);
+
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      await GoogleSignin.signOut(); // har baar account chooser dikhaye
+      const signInResult: any = await GoogleSignin.signIn();
+
+      const idToken = signInResult?.data?.idToken || signInResult?.idToken;
+
+      if (!idToken) {
+        Alert.alert("Google Signup failed", "No ID token found");
+        return;
+      }
+
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      await auth().signInWithCredential(googleCredential);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Welcome" }],
+      });
+    } catch (e: any) {
+      if (e?.code === statusCodes.SIGN_IN_CANCELLED) return;
+
+      if (e?.code === statusCodes.IN_PROGRESS) {
+        Alert.alert("Please wait", "Google sign-in already in progress");
+        return;
+      }
+
+      if (e?.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert("Google Play Services", "Play Services not available or outdated");
+        return;
+      }
+
+      Alert.alert("Google Signup failed", e?.message ?? "Something went wrong");
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <KeyboardAvoidingView
@@ -139,7 +190,6 @@ const Signup = ({ navigation }: any) => {
                 setPassword(t);
                 if (passwordError) setPasswordError("");
 
-                // ✅ confirm already typed ho to realtime re-check
                 if (confirm) {
                   if (t !== confirm) {
                     setConfirmError("Confirm password does not match");
@@ -193,6 +243,7 @@ const Signup = ({ navigation }: any) => {
             title="Create Account"
             loading={isSignupLoading}
             loadingText="Creating Account..."
+            disabled={isGoogleLoading}
             onPress={validateAndSignup}
             buttonStyle={{ marginTop: "10%" }}
           />
@@ -200,7 +251,10 @@ const Signup = ({ navigation }: any) => {
           <Text style={styles.orText}>- OR Continue with -</Text>
 
           <View style={styles.socialRow}>
-            <SocialButton type="google" />
+            <SocialButton
+              type="google"
+              onPress={isSignupLoading || isGoogleLoading ? undefined : onGoogleButtonPress}
+            />
             <SocialButton type="facebook" />
             <SocialButton type="apple" />
           </View>
