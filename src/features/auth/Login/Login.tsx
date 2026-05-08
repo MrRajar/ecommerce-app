@@ -18,6 +18,7 @@ import AppButton from "../../../components/AppButton";
 import SocialButton from "../../../components/SocialButton";
 
 import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";  // ← NEW
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 
 const Login = ({ navigation }: any) => {
@@ -36,6 +37,36 @@ const Login = ({ navigation }: any) => {
         "628932099560-taslka7vc9c14h54vfv7g9j3ktnhi8ot.apps.googleusercontent.com",
     });
   }, []);
+
+  // -----------------------------------------
+  // Helper: Google user ka Firestore document ensure karo
+  // (agar pehle se hai to skip, nahi hai to create)
+  // -----------------------------------------
+  const ensureFirestoreUser = async (uid: string, userEmail: string, userName: string = "") => {
+    try {
+      const userDoc = await firestore().collection("users").doc(uid).get();
+      if (userDoc.exists()) return; // already exists
+
+      await firestore().collection("users").doc(uid).set({
+        name: userName,
+        email: userEmail,
+        phone: "",
+        pincode: "",
+        address: "",
+        city: "",
+        stateName: "",
+        country: "",
+        bankAccountNumber: "",
+        accountHolderName: "",
+        ifscCode: "",
+        profileImage: "",
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (error: any) {
+      console.log("Firestore user creation error:", error.message);
+    }
+  };
 
   const validateAndLogin = async () => {
     if (isLoginLoading || isGoogleLoading) return;
@@ -69,6 +100,7 @@ const Login = ({ navigation }: any) => {
 
       await auth().signInWithEmailAndPassword(email.trim(), password);
 
+      // AuthContext auto detect karega → Firestore se data fetch hoga
       navigation.reset({
         index: 0,
         routes: [{ name: "Welcome" }],
@@ -92,7 +124,7 @@ const Login = ({ navigation }: any) => {
       setIsGoogleLoading(true);
 
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      await GoogleSignin.signOut(); // har baar account chooser dikhaye
+      await GoogleSignin.signOut();
       const signInResult: any = await GoogleSignin.signIn();
 
       const idToken = signInResult?.data?.idToken || signInResult?.idToken;
@@ -103,7 +135,14 @@ const Login = ({ navigation }: any) => {
       }
 
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      await auth().signInWithCredential(googleCredential);
+      const userCredential = await auth().signInWithCredential(googleCredential);
+
+      // ✅ NEW: Google user ka Firestore document ensure karo
+      await ensureFirestoreUser(
+        userCredential.user.uid,
+        userCredential.user.email || "",
+        userCredential.user.displayName || "",
+      );
 
       navigation.reset({
         index: 0,
@@ -148,12 +187,14 @@ const Login = ({ navigation }: any) => {
             icon="person"
             iconType="material"
             value={email}
+            importantForAutofill="yes"
             keyboardType="email-address"
             inputMode="email"
             autoCapitalize="none"
             autoCorrect={false}
-            autoComplete="email"
-            textContentType="emailAddress"
+            placeholderTextColor="#999"
+            textContentType="none"
+            autoComplete="off"
             returnKeyType="next"
             onChangeText={(t: string) => {
               setEmail(t);
@@ -162,7 +203,7 @@ const Login = ({ navigation }: any) => {
             error={emailError}
           />
 
-          <View style={{ marginTop: "5%" }}>
+          <View style={{ marginTop: "5%", backgroundColor: "transparent" }}>
             <AppInput
               placeholder="Password"
               icon="lock"
@@ -170,11 +211,13 @@ const Login = ({ navigation }: any) => {
               secureTextEntry
               value={password}
               inputMode="text"
+              importantForAutofill="yes"
               autoCapitalize="none"
               autoCorrect={false}
-              autoComplete="current-password"
-              textContentType="password"
+              textContentType="none"
+              autoComplete="off"
               returnKeyType="done"
+              placeholderTextColor="#999"
               onChangeText={(t: string) => {
                 setPassword(t);
                 if (passwordError) setPasswordError("");

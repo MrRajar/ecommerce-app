@@ -18,6 +18,7 @@ import AppButton from "../../../components/AppButton";
 import SocialButton from "../../../components/SocialButton";
 
 import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 
 const Signup = ({ navigation }: any) => {
@@ -38,6 +39,35 @@ const Signup = ({ navigation }: any) => {
         "628932099560-taslka7vc9c14h54vfv7g9j3ktnhi8ot.apps.googleusercontent.com",
     });
   }, []);
+
+  // -----------------------------------------
+  // NEW: Firestore mein user document create
+  // -----------------------------------------
+  const createFirestoreUser = async (uid: string, userEmail: string, userName: string = "") => {
+    try {
+      const userDoc = await firestore().collection("users").doc(uid).get();
+      if (userDoc.exists()) return;
+
+      await firestore().collection("users").doc(uid).set({
+        name: userName,
+        email: userEmail,
+        phone: "",
+        pincode: "",
+        address: "",
+        city: "",
+        stateName: "",
+        country: "",
+        bankAccountNumber: "",
+        accountHolderName: "",
+        ifscCode: "",
+        profileImage: "",
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (error: any) {
+      console.log("Firestore user creation error:", error.message);
+    }
+  };
 
   const validateAndSignup = async () => {
     if (isSignupLoading || isGoogleLoading) return;
@@ -79,7 +109,10 @@ const Signup = ({ navigation }: any) => {
     try {
       setIsSignupLoading(true);
 
-      await auth().createUserWithEmailAndPassword(email.trim(), password);
+      const userCredential = await auth().createUserWithEmailAndPassword(email.trim(), password);
+
+      // NEW: Firestore mein document create
+      await createFirestoreUser(userCredential.user.uid, email.trim());
 
       navigation.reset({
         index: 0,
@@ -104,7 +137,7 @@ const Signup = ({ navigation }: any) => {
       setIsGoogleLoading(true);
 
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      await GoogleSignin.signOut(); // har baar account chooser dikhaye
+      await GoogleSignin.signOut();
       const signInResult: any = await GoogleSignin.signIn();
 
       const idToken = signInResult?.data?.idToken || signInResult?.idToken;
@@ -115,7 +148,14 @@ const Signup = ({ navigation }: any) => {
       }
 
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      await auth().signInWithCredential(googleCredential);
+      const userCredential = await auth().signInWithCredential(googleCredential);
+
+      // NEW: Google user ka bhi Firestore document create
+      await createFirestoreUser(
+        userCredential.user.uid,
+        userCredential.user.email || "",
+        userCredential.user.displayName || "",
+      );
 
       navigation.reset({
         index: 0,

@@ -10,13 +10,14 @@ const AppInput = ({
   value,
   onChangeText,
   error,
+  autoComplete,        // ✅ naya prop
+  textContentType,     // ✅ naya prop
 }: any) => {
   const [hide, setHide] = useState(!!secureTextEntry);
 
   return (
     <View style={{ marginBottom: 14 }}>
       <View style={[styles.box, error && styles.err]}>
-        {/* LEFT ICON */}
         {icon && (
           <AppIcon name={icon} type={iconType} size={22} color="#626262" />
         )}
@@ -27,9 +28,10 @@ const AppInput = ({
           secureTextEntry={secureTextEntry ? hide : false}
           value={value}
           onChangeText={onChangeText}
+          autoComplete={autoComplete}              // ✅ add kiya
+          textContentType={textContentType}        // ✅ add kiya
         />
 
-        {/* RIGHT ICON (EYE) — ONLY FOR PASSWORD */}
         {secureTextEntry && (
           <TouchableOpacity onPress={() => setHide(!hide)}>
             <AppIcon

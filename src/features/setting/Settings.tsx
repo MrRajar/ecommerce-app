@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';  // ← NEW
 
 import CheckoutHeader from '../../components/CheckoutHeader';
 import { styles } from './settings.styles';
@@ -24,10 +25,13 @@ import SettingsInputField from './Component/SettingsInputField';
 import AvatarOptionsSheet from './Component/AvatarOptionsSheet';
 import ProfileImagePreviewModal from './Component/ProfileImagePreviewModal';
 
+import { useAuth } from '../../features/auth/AuthContext/AuthContext';  // ← NEW
+
 const PROFILE_IMAGE_KEY = '@profile_image_uri';
 
 const SettingsScreen: React.FC = () => {
   const navigation: any = useNavigation();
+  const { userData, updateUserData } = useAuth();  // ← NEW: Firestore data
 
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
 
@@ -43,65 +47,49 @@ const SettingsScreen: React.FC = () => {
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
   const [isPickingImage, setIsPickingImage] = useState(false);
 
-  const [email, setEmail] = useState('aashifa@gmail.com');
-  const [name, setName] = useState('sheikhatif');
+  // ← CHANGED: Default values ab Firestore se aayengi (empty until loaded)
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
 
-  const [pincode, setPincode] = useState('450116');
-  const [address, setAddress] = useState("216 St Paul's Rd,");
-  const [city, setCity] = useState('London');
-  const [stateName, setStateName] = useState('N1 2LL,');
-  const [country, setCountry] = useState('United Kingdom');
+  const [pincode, setPincode] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [stateName, setStateName] = useState('');
+  const [country, setCountry] = useState('');
 
-  const [bankAccountNumber, setBankAccountNumber] = useState('204356XXXXXXX');
-  const [accountHolderName, setAccountHolderName] = useState('Abhiraj Sisodiya');
-  const [ifscCode, setIfscCode] = useState('SBIN00428');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
 
+  // ← CHANGED: Ab data Firestore (userData) se load hoga
   useEffect(() => {
     const loadSavedProfileData = async () => {
       try {
+        // Profile image abhi bhi AsyncStorage se (local file path hai)
         const savedUri = await AsyncStorage.getItem(PROFILE_IMAGE_KEY);
         setProfileImageUri(savedUri || null);
         setDraftProfileImageUri(undefined);
 
-        const currentUser = auth().currentUser;
-        if (currentUser && currentUser.email) {
-          setEmail(currentUser.email);
+        // ✅ Baqi sab data Firestore se (via AuthContext)
+        if (userData) {
+          setEmail(userData.email || '');
+          setName(userData.name || '');
+          setPincode(userData.pincode || '');
+          setAddress(userData.address || '');
+          setCity(userData.city || '');
+          setStateName(userData.stateName || '');
+          setCountry(userData.country || '');
+          setBankAccountNumber(userData.bankAccountNumber || '');
+          setAccountHolderName(userData.accountHolderName || '');
+          setIfscCode(userData.ifscCode || '');
         }
-
-        const savedName = await AsyncStorage.getItem('@profile_name');
-        if (savedName) setName(savedName);
-
-        const savedPincode = await AsyncStorage.getItem('@profile_pincode');
-        if (savedPincode) setPincode(savedPincode);
-
-        const savedAddress = await AsyncStorage.getItem('@profile_address');
-        if (savedAddress) setAddress(savedAddress);
-
-        const savedCity = await AsyncStorage.getItem('@profile_city');
-        if (savedCity) setCity(savedCity);
-
-        const savedState = await AsyncStorage.getItem('@profile_state');
-        if (savedState) setStateName(savedState);
-
-        const savedCountry = await AsyncStorage.getItem('@profile_country');
-        if (savedCountry) setCountry(savedCountry);
-
-        const savedBankAcc = await AsyncStorage.getItem('@profile_bank_acc');
-        if (savedBankAcc) setBankAccountNumber(savedBankAcc);
-
-        const savedBankName = await AsyncStorage.getItem('@profile_bank_name');
-        if (savedBankName) setAccountHolderName(savedBankName);
-
-        const savedBankIfsc = await AsyncStorage.getItem('@profile_bank_ifsc');
-        if (savedBankIfsc) setIfscCode(savedBankIfsc);
-
       } catch (e) {
         console.log('Failed to load profile data', e);
       }
     };
 
     loadSavedProfileData();
-  }, []);
+  }, [userData]);  // ← userData change hone pe re-run
 
   const currentPreviewUri = useMemo(
     () => (draftProfileImageUri !== undefined ? draftProfileImageUri : profileImageUri),
@@ -156,7 +144,6 @@ const SettingsScreen: React.FC = () => {
         return;
       }
 
-      // Runtime camera permission request
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.CAMERA,
         {
@@ -243,22 +230,30 @@ const SettingsScreen: React.FC = () => {
     );
   };
 
+  // ← CHANGED: Save ab Firestore mein hoga (AsyncStorage sirf image ke liye)
   const handleSave = async () => {
     if (isSaving) return;
 
     try {
       setIsSaving(true);
 
-      await AsyncStorage.setItem('@profile_name', name);
-      await AsyncStorage.setItem('@profile_pincode', pincode);
-      await AsyncStorage.setItem('@profile_address', address);
-      await AsyncStorage.setItem('@profile_city', city);
-      await AsyncStorage.setItem('@profile_state', stateName);
-      await AsyncStorage.setItem('@profile_country', country);
-      await AsyncStorage.setItem('@profile_bank_acc', bankAccountNumber);
-      await AsyncStorage.setItem('@profile_bank_name', accountHolderName);
-      await AsyncStorage.setItem('@profile_bank_ifsc', ifscCode);
+      // ✅ Firestore mein sab data save karo (via AuthContext)
+      const result = await updateUserData({
+        name,
+        pincode,
+        address,
+        city,
+        stateName,
+        country,
+        bankAccountNumber,
+        accountHolderName,
+        ifscCode,
+      });
 
+      if (!result.success) {
+        Alert.alert('Save failed', result.error ?? 'Something went wrong');
+        return;
+      }
       if (draftProfileImageUri !== undefined) {
         if (draftProfileImageUri) {
           await AsyncStorage.setItem(PROFILE_IMAGE_KEY, draftProfileImageUri);
@@ -318,6 +313,9 @@ const SettingsScreen: React.FC = () => {
               if (!currentUser) {
                 throw new Error('No logged in user found');
               }
+
+              // ✅ NEW: Firestore document bhi delete karo
+              await firestore().collection('users').doc(currentUser.uid).delete();
 
               await AsyncStorage.removeItem(PROFILE_IMAGE_KEY);
               await currentUser.delete();
@@ -396,7 +394,7 @@ const SettingsScreen: React.FC = () => {
           <SettingsInputField
             label="Pincode"
             value={pincode}
-            onChangeText={(t) => setPincode(t.replace(/[^\d]/g, ''))}
+            onChangeText={(t: string) => setPincode(t.replace(/[^\d]/g, ''))}
             keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
             maxLength={10}
           />

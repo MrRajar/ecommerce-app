@@ -9,9 +9,9 @@ export const AppImages={
     Welcome:require('../../../assets/images/welcome.png'),
     avatar:require("../../../assets/images/avatar.png"),
   // ===== BANNERS =====
-  banner1: require('../../../assets/images/banner1.png'),
-  banner2: require('../../../assets/images/banner1.png'),
-  banner3: require('../../../assets/images/banner1.png'),
+  banner1: require('../../../assets/images/summeroffer.png'),
+  banner2: require('../../../assets/images/specialoffer.png'),
+  banner3: require('../../../assets/images/heelbanner.png'),
 //===2product===
    deal1: require('../../../assets/images/deal1.png'),
    deal2: require('../../../assets/images/deal2.png'),
